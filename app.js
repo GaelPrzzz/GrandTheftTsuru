@@ -40,11 +40,11 @@ const state = {
   gas: false,
   brake: false,
 
-  // Dirección ágil centrada
+  // Dirección y posición en carril
   steer: 0,             // grados del volante (-180..180)
   steerDrag: false,
   steerHold: 0,         // -1 | 0 | 1 (A / D o botones)
-  playerX: 0.25,        // Inicia en carril derecho interior (carriles de 4: -0.75, -0.25 || 0.25, 0.75)
+  playerX: 0.25,        // Inicia en el carril derecho interior
   dist: 0,
   odo: 42.8,
 
@@ -116,11 +116,12 @@ const I18N = {
     toast_handbrake_warn: "⚠️ ¡Freno de mano en movimiento!",
     toast_restart: "🚦 ¡Partida reiniciada! ¡Acelera!",
     tut_steps: [
-      { icon: "🏎️", title: "Acelerar y Frenar", desc: "Usa <span class='tut-keys'>W</span> o <span class='tut-keys'>↑</span> para acelerar a fondo. Usa <span class='tut-keys'>S</span>, <span class='tut-keys'>↓</span> o <span class='tut-keys'>ESPACIO</span> para frenar con fuerza." },
-      { icon: "🔄", title: "Dirección Ágil", desc: "Usa <span class='tut-keys'>A</span> / <span class='tut-keys'>D</span> o <span class='tut-keys'>←</span> / <span class='tut-keys'>→</span> para cambiar de carril ágilmente. También puedes arrastrar el volante con el ratón." },
+      { icon: "🏎️", title: "Acelerar y Frenar", desc: "Usa <span class='tut-keys'>W</span> o <span class='tut-keys'>↑</span> para acelerar. Usa <span class='tut-keys'>S</span>, <span class='tut-keys'>↓</span> o <span class='tut-keys'>ESPACIO</span> para frenar con fuerza." },
+      { icon: "🕹️", title: "Palanca de Cambios Real", desc: "Puedes arrastrar la palanca de cambios directamente con el ratón de <span class='tut-keys'>P</span> a <span class='tut-keys'>D</span> o usar <span class='tut-keys'>F</span> (Drive) y <span class='tut-keys'>R</span> (Reversa)." },
+      { icon: "🔄", title: "Dirección y Volante", desc: "Usa <span class='tut-keys'>A</span> / <span class='tut-keys'>D</span> o <span class='tut-keys'>←</span> / <span class='tut-keys'>→</span> para cambiar de carril ágilmente. También puedes sujetar y girar el volante con el ratón." },
+      { icon: "🎮", title: "Atajos del Salpicadero", desc: "<span class='tut-keys'>H</span> Bocina · <span class='tut-keys'>L</span> Luces · <span class='tut-keys'>Q</span>/<span class='tut-keys'>E</span> Direccionales · <span class='tut-keys'>X</span> Hazard · <span class='tut-keys'>P</span> Freno de Mano · <span class='tut-keys'>C</span> Limpiaparabrisas · <span class='tut-keys'>M</span> Música." },
       { icon: "🛣️", title: "4 Carriles de Autopista", desc: "Los 2 carriles derechos van en tu dirección (tráfico más lento). Los 2 carriles izquierdos vienen en sentido contrario (¡altísima velocidad frontal!)." },
-      { icon: "⚡", title: "Near Miss (+250 PTS)", desc: "Pasa rozando a otros vehículos a más de 40 km/h sin chocar para ganar bonificaciones épicas de puntuación." },
-      { icon: "⚠️", title: "¡No te Detengas!", desc: "Si te detienes más de 5 segundos en medio de la autopista o colisionas de frente o por alcance, la partida terminará." }
+      { icon: "⚡", title: "Near Miss (+250 PTS)", desc: "Pasa rozando a otros vehículos a más de 40 km/h sin chocar para ganar bonificaciones épicas de puntuación." }
     ]
   },
   en: {
@@ -163,10 +164,11 @@ const I18N = {
     toast_restart: "🚦 Game restarted! Floor it!",
     tut_steps: [
       { icon: "🏎️", title: "Accelerate & Brake", desc: "Press <span class='tut-keys'>W</span> or <span class='tut-keys'>↑</span> to accelerate. Press <span class='tut-keys'>S</span>, <span class='tut-keys'>↓</span> or <span class='tut-keys'>SPACE</span> to brake hard." },
-      { icon: "🔄", title: "Agile Steering", desc: "Use <span class='tut-keys'>A</span> / <span class='tut-keys'>D</span> or <span class='tut-keys'>←</span> / <span class='tut-keys'>→</span> for rapid lane changes. You can also drag the steering wheel with the mouse." },
+      { icon: "🕹️", title: "Realistic Gear Shifter", desc: "You can drag the gear knob directly with your mouse from <span class='tut-keys'>P</span> to <span class='tut-keys'>D</span>, or press <span class='tut-keys'>F</span> (Drive) and <span class='tut-keys'>R</span> (Reverse)." },
+      { icon: "🔄", title: "Steering Wheel", desc: "Use <span class='tut-keys'>A</span> / <span class='tut-keys'>D</span> or <span class='tut-keys'>←</span> / <span class='tut-keys'>→</span> for rapid lane changes, or grab and drag the steering wheel with your mouse." },
+      { icon: "🎮", title: "Dashboard Shortcuts", desc: "<span class='tut-keys'>H</span> Horn · <span class='tut-keys'>L</span> Lights · <span class='tut-keys'>Q</span>/<span class='tut-keys'>E</span> Blinkers · <span class='tut-keys'>X</span> Hazards · <span class='tut-keys'>P</span> E-Brake · <span class='tut-keys'>C</span> Wipers · <span class='tut-keys'>M</span> Radio." },
       { icon: "🛣️", title: "4 Highway Lanes", desc: "The 2 right lanes move forward with your traffic. The 2 left lanes feature oncoming traffic at extreme relative velocity." },
-      { icon: "⚡", title: "Near Miss (+250 PTS)", desc: "Graze by vehicles at speeds over 40 km/h without crashing to rack up combo bonus points." },
-      { icon: "⚠️", title: "Never Stop!", desc: "Stopping for over 5 seconds on the active highway or colliding into any vehicle will trigger Game Over." }
+      { icon: "⚡", title: "Near Miss (+250 PTS)", desc: "Graze by vehicles at speeds over 40 km/h without crashing to rack up combo bonus points." }
     ]
   }
 };
@@ -253,6 +255,8 @@ function spawnTrafficCar() {
     isTruck: isTruck,
     passed: false,
     nearMissed: false,
+    inOurPath: false, // Se activa si el auto estuvo en nuestra trayectoria directa
+    dodged: false,    // Evita contar doble esquive
     w: isTruck ? 0.38 : 0.32, // ancho de colisión
     l: isTruck ? 140 : 80,
   });
@@ -708,19 +712,75 @@ window.addEventListener('pointermove', onPointerMove);
 const endDrag = () => { state.steerDrag = false; wheel.classList.remove('dragging'); };
 ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => window.addEventListener(ev, endDrag));
 
-// Teclado ágil (W, A, S, D y Flechas)
+// Teclado interactivo y ágil
 window.addEventListener('keydown', (e) => {
   if (state.isGameOver) return;
+  // Acelerador y Freno
   if (['ArrowUp', 'KeyW'].includes(e.code)) state.gas = true;
   if (['ArrowDown', 'KeyS', 'Space'].includes(e.code)) state.brake = true;
+  // Dirección
   if (['ArrowLeft', 'KeyA'].includes(e.code)) state.steerHold = -1;
   if (['ArrowRight', 'KeyD'].includes(e.code)) state.steerHold = 1;
+
+  // Bocina (H)
+  if (e.code === 'KeyH' && !e.repeat) {
+    AudioSys.hornStart();
+    $('hub').classList.add('pressed');
+  }
+
+  // Luces (L)
+  if (e.code === 'KeyL' && !e.repeat) {
+    $('btnLights').click();
+  }
+
+  // Direccionales (Q = izquierda, E = derecha)
+  if (e.code === 'KeyQ' && !e.repeat) {
+    $('btnTurnL').click();
+  }
+  if (e.code === 'KeyE' && !e.repeat) {
+    $('btnTurnR').click();
+  }
+
+  // Luces de emergencia / Hazard (X)
+  if (e.code === 'KeyX' && !e.repeat) {
+    $('btnHazard').click();
+  }
+
+  // Freno de mano (P)
+  if (e.code === 'KeyP' && !e.repeat) {
+    $('btnHandbrake').click();
+  }
+
+  // Limpiaparabrisas (C)
+  if (e.code === 'KeyC' && !e.repeat) {
+    $('btnWiper').click();
+  }
+
+  // Marcha R (Reversa) o D (Drive / Avance)
+  if (e.code === 'KeyR' && !e.repeat) {
+    setGear('R');
+  }
+  if (e.code === 'KeyF' && !e.repeat) {
+    setGear('D');
+  }
+
+  // Radio / Música (M)
+  if (e.code === 'KeyM' && !e.repeat) {
+    $('btnPlay').click();
+  }
 });
+
 window.addEventListener('keyup', (e) => {
   if (['ArrowUp', 'KeyW'].includes(e.code)) state.gas = false;
   if (['ArrowDown', 'KeyS', 'Space'].includes(e.code)) state.brake = false;
   if (['ArrowLeft', 'KeyA'].includes(e.code) && state.steerHold === -1) state.steerHold = 0;
   if (['ArrowRight', 'KeyD'].includes(e.code) && state.steerHold === 1) state.steerHold = 0;
+
+  // Soltar bocina (H)
+  if (e.code === 'KeyH') {
+    AudioSys.hornStop();
+    $('hub').classList.remove('pressed');
+  }
 });
 
 // Botones de giro rápido en salpicadero
@@ -872,12 +932,15 @@ function sprayWasher() {
   }
 }
 
-// Selector de marchas
+// Selector de marchas (Botones y Arrastre realista con el Mouse)
 const KNOB_TOP = { P: -5, R: 25, N: 55, D: 85 };
 const GEAR_NAMES = { P: 'Parking', R: 'Reversa', N: 'Neutral', D: 'Drive' };
+const GEAR_ORDER = ['P', 'R', 'N', 'D'];
+
 document.querySelectorAll('.gopt').forEach((b) => {
   b.addEventListener('click', () => setGear(b.dataset.gear));
 });
+
 function setGear(g) {
   if (g === state.gear) return;
   const moving = Math.abs(state.speed) > 3;
@@ -892,6 +955,69 @@ function setGear(g) {
   k.textContent = g;
   k.style.top = KNOB_TOP[g] + 'px';
 }
+
+// Interacción directa arrastrando la palanca de cambios con el mouse
+const knobEl = $('knob');
+let knobDragging = false;
+let knobStartY = 0;
+let knobInitialTop = 0;
+
+knobEl.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  knobDragging = true;
+  knobEl.classList.add('dragging');
+  knobStartY = e.clientY;
+  knobInitialTop = KNOB_TOP[state.gear];
+  try { knobEl.setPointerCapture(e.pointerId); } catch (_) {}
+});
+
+window.addEventListener('pointermove', (e) => {
+  if (!knobDragging) return;
+  const deltaY = e.clientY - knobStartY;
+  // Posición visual arrastrada
+  const currentTop = clamp(knobInitialTop + deltaY, -10, 92);
+  knobEl.style.top = currentTop + 'px';
+
+  // Determinar la marcha más cercana según la posición Y
+  let closestGear = 'P';
+  let minDist = 999;
+  for (const g of GEAR_ORDER) {
+    const dist = Math.abs(currentTop - KNOB_TOP[g]);
+    if (dist < minDist) {
+      minDist = dist;
+      closestGear = g;
+    }
+  }
+
+  // Previsualizar la letra en la palanca mientras se arrastra
+  if (knobEl.textContent !== closestGear) {
+    knobEl.textContent = closestGear;
+    AudioSys.click();
+  }
+});
+
+const endKnobDrag = () => {
+  if (!knobDragging) return;
+  knobDragging = false;
+  knobEl.classList.remove('dragging');
+
+  // Ajustar a la marcha definitiva
+  let closestGear = 'P';
+  let minDist = 999;
+  const currentTop = parseFloat(knobEl.style.top) || KNOB_TOP[state.gear];
+  for (const g of GEAR_ORDER) {
+    const dist = Math.abs(currentTop - KNOB_TOP[g]);
+    if (dist < minDist) {
+      minDist = dist;
+      closestGear = g;
+    }
+  }
+  setGear(closestGear);
+  knobEl.style.top = KNOB_TOP[state.gear] + 'px';
+  knobEl.textContent = state.gear;
+};
+
+['pointerup', 'pointercancel', 'lostpointercapture'].forEach((ev) => window.addEventListener(ev, endKnobDrag));
 
 // =========================================================
 // GESTIÓN DE MENÚ PRINCIPAL, MODALES E IDIOMA
@@ -910,6 +1036,20 @@ function startGameFromMenu() {
   gameOverModalEl.classList.remove('show');
   state.gameActive = true;
   state.isGameOver = false;
+
+  // Reiniciar contadores de partida
+  state.score = 0;
+  state.dodges = 0;
+  state.stoppedTimer = 0;
+  state.playerX = 0.25;
+  state.steer = 0;
+  state.speed = 0;
+
+  // Actualizar HUD visual inmediatamente a 0
+  $('hudScore').textContent = '00000';
+  $('hudDodges').textContent = '0';
+  cache['hudScore'] = '00000';
+  cache['hudDodges'] = '0';
 
   // Si el motor estaba apagado o en Parking, prepararlo en modo Drive
   if (!state.engine) {
@@ -1036,6 +1176,15 @@ function restartGame() {
   state.playerX = 0.25; // carril derecho centrado
   state.steer = 0;
   state.speed = 0;
+  state.gas = false;
+  state.brake = false;
+
+  // Actualizar HUD visual de inmediato a cero
+  $('hudScore').textContent = '00000';
+  $('hudDodges').textContent = '0';
+  cache['hudScore'] = '00000';
+  cache['hudDodges'] = '0';
+
   gameOverModalEl.classList.remove('show');
   resetTraffic();
   toast(I18N[state.lang].toast_restart);
@@ -1113,30 +1262,30 @@ function update(dt) {
   state.rpm += (target - state.rpm) * Math.min(1, dt * 6);
   AudioSys.engineUpdate(state.rpm, state.throttle);
 
-  // Volante (respuesta ágil)
+  // Volante (respuesta suave, ágil y autocentrado natural)
   if (state.steerHold) {
-    state.steer = clamp(state.steer + state.steerHold * 400 * dt, -180, 180);
+    state.steer = clamp(state.steer + state.steerHold * 320 * dt, -160, 160);
   } else if (!state.steerDrag) {
-    state.steer *= Math.exp(-dt * 4.5);
+    // Retorno suave del volante al centro
+    state.steer *= Math.exp(-dt * 5.5);
     if (Math.abs(state.steer) < 0.2) state.steer = 0;
   }
 
-  // Desplazamiento lateral rápido entre carriles (-1.0 a +1.0)
-  const sN = state.steer / 180;
+  // Desplazamiento lateral proporcional entre carriles
+  const sN = state.steer / 160;
   const vN = nv / 100;
-  const curv = roadCurve(state.dist + 400);
 
-  // Dirección ágil con factor de 2.8 para esquives rápidos
-  state.playerX += (sN * 2.8 * Math.max(0.25, vN) - curv * 0.45 * Math.abs(vN)) * dt;
-  state.playerX = clamp(state.playerX, -1.35, 1.35);
+  // El auto responde de forma controlada a la velocidad y ángulo de giro, recto y centrado
+  state.playerX += (sN * 1.5 * Math.max(0.3, vN)) * dt;
+  state.playerX = clamp(state.playerX, -1.25, 1.25);
 
   const wasOff = state.offroad;
   state.offroad = Math.abs(state.playerX) > 1.05;
   if (state.offroad && !wasOff && Math.abs(nv) > 10) {
-    toast('🌿 ¡Fuera de la carretera! Vuelve al asfalto');
+    toast(I18N[state.lang].toast_offroad);
   }
 
-  state.bg += (curv * 0.7 + sN * 0.6) * vN * dt * 260;
+  state.bg += sN * 0.4 * vN * dt * 200;
   state.dist += (nv / 3.6) * dt * 42;
   state.odo += Math.abs(nv) / 3600 * dt;
 
@@ -1196,30 +1345,39 @@ function updateTraffic(dt, playerSpeed) {
     const relativeSpeed = car.isIncoming ? (playerSpeed + car.speed) : (playerSpeed - car.speed);
     car.z -= (relativeSpeed / 3.6) * dt * 42;
 
-    // Detectar Colisión
-    // Zona de peligro en Z: cuando el auto está a nivel frontal de nuestro capó (z entre 0 y 65)
+    // 1. Detección de peligro anticipado (el auto está en nuestro mismo carril por delante)
+    if (!state.isGameOver && car.z > 70 && car.z < 280) {
+      if (Math.abs(state.playerX - car.laneX) < 0.26) {
+        car.inOurPath = true; // Estaba en curso directo de colisión
+      }
+    }
+
+    // 2. Detectar Colisión y Esquives activos a nivel de capó (z entre -10 y 75)
     if (!state.isGameOver && car.z > -10 && car.z < 75) {
       const lateralDist = Math.abs(state.playerX - car.laneX);
 
-      // Colisión directa
-      if (lateralDist < 0.28) {
+      // Colisión directa (tolerancia ajustada al ancho del carro dentro del carril)
+      if (lateralDist < 0.22) {
         triggerGameOver(car.isIncoming ? 'go_reason_crash_front' : 'go_reason_crash_rear');
       }
-      // Rebase al filo (Near Miss)
-      else if (lateralDist < 0.44 && !car.nearMissed && playerSpeed > 40) {
+      // Esquive al filo / Rebase ajustado (Near Miss)
+      else if (lateralDist < 0.40 && !car.dodged && playerSpeed > 35) {
+        car.dodged = true;
         car.nearMissed = true;
         state.score += 250;
         state.dodges++;
         showNearMiss();
       }
+      // Esquive por cambio de carril (estaba en tu camino y te moviste a otro carril para esquivarlo)
+      else if (car.inOurPath && lateralDist >= 0.35 && !car.dodged && playerSpeed > 25) {
+        car.dodged = true;
+        state.dodges++;
+        state.score += 150;
+      }
     }
 
     // El auto nos rebasó por detrás y ya no es visible
     if (car.z < -200) {
-      if (!car.passed && !car.nearMissed && playerSpeed > 20) {
-        state.dodges++;
-        state.score += 50;
-      }
       traffic.splice(i, 1);
     }
   }
@@ -1265,69 +1423,117 @@ function drawCloud(x, y, s) {
   ctx.fill();
 }
 
-// Dibujar vehículo de tráfico con perspectiva y luces
+// Dibujar vehículo de tráfico con perspectiva frontal recta y proporciones exactas al carril
 function drawTrafficVehicle(car, HZ, curv) {
-  if (car.z <= 12) return; // Fuera del parabrisas
+  if (car.z <= 6) return; // Fuera del campo visual
   const p = D / car.z;
   const y = HZ + p * (H - HZ);
-  if (y > 660 || y < HZ) return;
+  if (y > 680 || y < HZ) return;
 
-  const half = 1450 * p; // ancho de autopista de 4 carriles
-  // Centro horizontal alineado con la carretera y carril
-  const cx = W / 2 + curv * (1 - p) * (1 - p) * 420 - state.playerX * half;
+  // Autopista con escala half = 2300 * p (ancho de cada carril = 0.5 * half = 1150 * p)
+  const half = 2300 * p;
+  const cx = W / 2 - state.playerX * half;
   const carX = cx + car.laneX * half;
-  const carW = p * (car.isTruck ? 520 : 420);
+
+  // Proporción del auto: cabe con holgura dentro del carril (ancho de carril = 1150*p, auto = 480*p o 560*p)
+  // Deja más del 50% de espacio libre en el carril para que se vea holgado y no apretado
+  const carW = p * (car.isTruck ? 540 : 440);
   const carH = p * (car.isTruck ? 420 : 250);
+  const depth = p * (car.isTruck ? 160 : 100);
 
   ctx.save();
   ctx.translate(carX, y);
 
-  // Sombra proyectada en el asfalto
-  ctx.fillStyle = 'rgba(10, 10, 15, 0.45)';
+  // 1. Sombra suave sobre el asfalto debajo del auto
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
   ctx.beginPath();
-  ctx.ellipse(0, 0, carW * 0.55, carH * 0.16, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 2, carW * 0.56, carH * 0.16, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Carrocería del auto
+  // 2. Ruedas visibles en la base
+  ctx.fillStyle = '#16161a';
+  const tireW = carW * 0.16;
+  const tireH = carH * 0.22;
+  ctx.fillRect(-carW * 0.46, -tireH * 0.8, tireW, tireH);
+  ctx.fillRect(carW * 0.46 - tireW, -tireH * 0.8, tireW, tireH);
+
+  // 3. Perspectiva 3D lateral sutil según el ángulo relativo
+  const relX = carX - W / 2;
+  if (Math.abs(relX) > 60 && p > 0.08) {
+    const sideDir = relX > 0 ? -1 : 1;
+    const sideW = Math.min(carW * 0.28, Math.abs(relX) * 0.04 * p * 5);
+    ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    ctx.beginPath();
+    const sideEdgeX = sideDir < 0 ? -carW / 2 : carW / 2;
+    ctx.moveTo(sideEdgeX, 0);
+    ctx.lineTo(sideEdgeX + sideDir * sideW, -depth * 0.35);
+    ctx.lineTo(sideEdgeX + sideDir * sideW, -carH - depth * 0.35);
+    ctx.lineTo(sideEdgeX, -carH);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // 4. Carrocería principal
   ctx.fillStyle = car.color;
   ctx.beginPath();
-  ctx.roundRect(-carW / 2, -carH, carW, carH * 0.85, [carW * 0.12, carW * 0.12, 4, 4]);
+  ctx.roundRect(-carW / 2, -carH, carW, carH * 0.88, [carW * 0.1, carW * 0.1, 4, 4]);
   ctx.fill();
 
-  // Techo / Cabina
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  // Relieve de iluminación en la carrocería
+  const bodyGrad = ctx.createLinearGradient(0, -carH, 0, 0);
+  bodyGrad.addColorStop(0, 'rgba(255,255,255,0.22)');
+  bodyGrad.addColorStop(0.5, 'rgba(0,0,0,0)');
+  bodyGrad.addColorStop(1, 'rgba(0,0,0,0.3)');
+  ctx.fillStyle = bodyGrad;
   ctx.beginPath();
-  ctx.roundRect(-carW * 0.38, -carH * 0.95, carW * 0.76, carH * 0.42, [carW * 0.1, carW * 0.1, 0, 0]);
+  ctx.roundRect(-carW / 2, -carH, carW, carH * 0.88, [carW * 0.1, carW * 0.1, 4, 4]);
   ctx.fill();
 
-  // Cristal de parabrisas / luna trasera
-  ctx.fillStyle = '#1c2833';
-  ctx.fillRect(-carW * 0.32, -carH * 0.85, carW * 0.64, carH * 0.28);
+  // 5. Cabina y Cristales
+  ctx.fillStyle = 'rgba(16, 24, 32, 0.95)';
+  ctx.beginPath();
+  ctx.roundRect(-carW * 0.38, -carH * 0.96, carW * 0.76, carH * 0.44, [carW * 0.08, carW * 0.08, 2, 2]);
+  ctx.fill();
 
-  // Parachoques / Detalles
-  ctx.fillStyle = '#1e1e24';
-  ctx.fillRect(-carW * 0.48, -carH * 0.18, carW * 0.96, carH * 0.16);
+  // Brillo en el cristal
+  ctx.fillStyle = 'rgba(180, 220, 255, 0.3)';
+  ctx.beginPath();
+  ctx.moveTo(-carW * 0.32, -carH * 0.92);
+  ctx.lineTo(-carW * 0.12, -carH * 0.92);
+  ctx.lineTo(-carW * 0.22, -carH * 0.56);
+  ctx.lineTo(-carW * 0.34, -carH * 0.56);
+  ctx.closePath();
+  ctx.fill();
 
-  // Luces
+  // 6. Moldura / Parachoques
+  ctx.fillStyle = '#1c1d22';
+  ctx.fillRect(-carW * 0.48, -carH * 0.2, carW * 0.96, carH * 0.18);
+
+  // 7. Luces e iluminación activa
   if (car.isIncoming) {
-    // Luces delanteras blancas brillantes (viene de frente)
-    ctx.fillStyle = '#fffdf0';
-    ctx.shadowColor = '#fff';
-    ctx.shadowBlur = 10;
-    ctx.fillRect(-carW * 0.44, -carH * 0.35, carW * 0.22, carH * 0.14);
-    ctx.fillRect(carW * 0.22, -carH * 0.35, carW * 0.22, carH * 0.14);
+    // Luces delanteras blancas brillantes (faros)
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#ffffd0';
+    ctx.shadowBlur = Math.min(24, 180 * p);
+    ctx.fillRect(-carW * 0.44, -carH * 0.38, carW * 0.22, carH * 0.16);
+    ctx.fillRect(carW * 0.22, -carH * 0.38, carW * 0.22, carH * 0.16);
+    ctx.shadowBlur = 0;
+
+    // Parrilla delantera
+    ctx.fillStyle = '#111';
+    ctx.fillRect(-carW * 0.18, -carH * 0.36, carW * 0.36, carH * 0.14);
   } else {
-    // Luces traseras rojas (va en nuestro sentido)
-    ctx.fillStyle = '#ff2020';
+    // Luces traseras rojas
+    ctx.fillStyle = '#ff2b2b';
     ctx.shadowColor = '#ff2020';
-    ctx.shadowBlur = 8;
-    ctx.fillRect(-carW * 0.45, -carH * 0.4, carW * 0.22, carH * 0.14);
-    ctx.fillRect(carW * 0.23, -carH * 0.4, carW * 0.22, carH * 0.14);
+    ctx.shadowBlur = Math.min(20, 160 * p);
+    ctx.fillRect(-carW * 0.45, -carH * 0.42, carW * 0.22, carH * 0.16);
+    ctx.fillRect(carW * 0.23, -carH * 0.42, carW * 0.22, carH * 0.16);
+    ctx.shadowBlur = 0;
 
     // Matrícula
-    ctx.fillStyle = '#e8e8e8';
-    ctx.shadowBlur = 0;
-    ctx.fillRect(-carW * 0.15, -carH * 0.28, carW * 0.3, carH * 0.1);
+    ctx.fillStyle = '#e5e9f0';
+    ctx.fillRect(-carW * 0.15, -carH * 0.3, carW * 0.3, carH * 0.11);
   }
 
   ctx.restore();
@@ -1335,25 +1541,19 @@ function drawTrafficVehicle(car, HZ, curv) {
 
 function render() {
   const speedAbs = Math.abs(state.speed);
-  const pitch = clamp(state.accel * 0.25, -14, 14);
-  const HZ = HZ0 + pitch;
-  const curv = roadCurve(state.dist + 400);
-  const roll = -(state.steer / 180) * clamp(state.speed / 200, -0.3, 1) * 0.035;
+  // Cámara completamente fija y centrada (sin cabeceos, sin inclinaciones raras)
+  const HZ = HZ0;
+  const curv = 0; // Carretera recta y despejada hacia el horizonte
 
+  // Vibración sutil sólo si va fuera de la carretera a alta velocidad
   let sx = 0, sy = 0;
-  if (speedAbs > 120) {
-    const k = (speedAbs - 120) / 90;
-    sx = (Math.random() - 0.5) * k * 2.5;
-    sy = (Math.random() - 0.5) * k * 2.5;
-  }
-  if (state.offroad && speedAbs > 5) {
-    sx += (Math.random() - 0.5) * 6;
-    sy += (Math.random() - 0.5) * 6;
+  if (state.offroad && speedAbs > 15) {
+    sx = (Math.random() - 0.5) * 4;
+    sy = (Math.random() - 0.5) * 4;
   }
 
   ctx.save();
   ctx.translate(W / 2 + sx, H * 0.45 + sy);
-  ctx.rotate(roll);
   ctx.translate(-W / 2, -H * 0.45);
 
   // Cielo
@@ -1377,7 +1577,7 @@ function render() {
   // Nubes
   for (const c of clouds) {
     const x = ((c.x + state.time * c.v - state.bg * 0.15) % 2000 + 2000) % 2000 - 200;
-    drawCloud(x, c.y + pitch * 0.3, c.s);
+    drawCloud(x, c.y, c.s);
   }
 
   // Montañas
@@ -1389,51 +1589,52 @@ function render() {
   ctx.fillRect(-200, HZ, W + 400, H - HZ + 200);
 
   // ==========================================
-  // CARRETERA DE 4 CARRILES (2 y 2)
+  // CARRETERA DE 4 CARRILES AMPLIOS (PERSPECTIVA FRONTAL RECTA)
   // ==========================================
+  // Punto de fuga centrado recto como simulador de cabina (imagen de referencia)
   const BOTTOM = 660;
+
   for (let y = Math.floor(HZ) + 1; y < BOTTOM; y += 2) {
     const p = (y - HZ) / (H - HZ);
     const z = D / p;
-    // Autopista más ancha para 4 carriles cómodos (1450 * p)
-    const half = 1450 * p;
-    // Centrado de carretera
-    const cx = W / 2 + curv * (1 - p) * (1 - p) * 420 - state.playerX * half;
+    // Autopista espaciosa donde cada carril mide más de 550px al frente
+    const half = 2300 * p;
+    // Perspectiva frontal recta con curvatura sutil y suave
+    const cx = W / 2 - state.playerX * half;
     const seg = Math.floor((z + state.dist) / 60) & 1;
-    const rumble = half * 0.08;
+    const rumble = half * 0.055;
 
     // Pasto exterior
     ctx.fillStyle = seg ? '#74b64f' : '#68a944';
     ctx.fillRect(-200, y, W + 400, 2);
 
-    // Bordillo / Arcén rojo y blanco
+    // Bordo / Arcén exterior (rojo y blanco)
     ctx.fillStyle = seg ? '#d8352a' : '#f2f2f2';
     ctx.fillRect(cx - half - rumble, y, (half + rumble) * 2, 2);
 
-    // Asfalto principal
-    ctx.fillStyle = seg ? '#5f5f65' : '#57575d';
+    // Asfalto principal espacioso
+    ctx.fillStyle = seg ? '#585960' : '#4f5056';
     ctx.fillRect(cx - half, y, half * 2, 2);
 
-    // Líneas laterales exteriores (blancas continuas)
+    // Líneas laterales exteriores continuas (blancas)
     ctx.fillStyle = '#f4f4f4';
-    const edgeW = half * 0.016;
-    ctx.fillRect(cx - half * 0.96 - edgeW, y, edgeW * 2, 2);
-    ctx.fillRect(cx + half * 0.96 - edgeW, y, edgeW * 2, 2);
+    const edgeW = Math.max(2, half * 0.012);
+    ctx.fillRect(cx - half * 0.98 - edgeW, y, edgeW * 2, 2);
+    ctx.fillRect(cx + half * 0.98 - edgeW, y, edgeW * 2, 2);
 
-    // 1. Línea Central Doble Amarilla (separa los 2 sentidos: izquierda y derecha)
-    const midW = half * 0.014;
+    // 1. Línea Central Doble Amarilla (separa los 2 sentidos: carriles izquierdos y derechos)
+    const midW = Math.max(2, half * 0.010);
     ctx.fillStyle = '#ffb300';
     ctx.fillRect(cx - midW * 2.2, y, midW * 1.5, 2);
     ctx.fillRect(cx + midW * 0.7, y, midW * 1.5, 2);
 
-    // 2. Líneas divisoras de carril discontinuas (blancas)
-    // Carril izquierdo (-0.5) y carril derecho (+0.5)
+    // 2. Líneas divisoras discontinuas entre carriles del mismo sentido (blancas)
     if (seg) {
-      const dashW = half * 0.012;
+      const dashW = Math.max(2, half * 0.009);
       ctx.fillStyle = '#ffffff';
-      // Divisoria entre carriles de sentido contrario
+      // Divisoria entre los 2 carriles izquierdos (-0.5)
       ctx.fillRect(cx - half * 0.5 - dashW, y, dashW * 2, 2);
-      // Divisoria entre carriles de nuestro sentido
+      // Divisoria entre los 2 carriles derechos (+0.5)
       ctx.fillRect(cx + half * 0.5 - dashW, y, dashW * 2, 2);
     }
   }
@@ -1453,6 +1654,7 @@ function render() {
 
   ctx.restore();
 }
+
 
 /* ---------------------------------------------------------
    11. Actualización de Interfaz y Tablero
@@ -1498,8 +1700,14 @@ function updateUI() {
   // Vibración
   setClass(stage, 'shake', state.offroad && Math.abs(state.speed) > 5);
 
-  // Espejo retrovisor
-  $('mirrorRoad').style.setProperty('--mpos', `${(-state.dist * 0.4) % 14}px`);
+  // Espejos retrovisores animados (Central y Laterales)
+  const mirrorShift = `${(-state.dist * 0.4) % 14}px`;
+  const mCenter = $('mirrorRoad');
+  const mL = $('mirrorRoadL');
+  const mR = $('mirrorRoadR');
+  if (mCenter) mCenter.style.setProperty('--mpos', mirrorShift);
+  if (mL) mL.style.setProperty('--mpos', mirrorShift);
+  if (mR) mR.style.setProperty('--mpos', mirrorShift);
 
   // Visualizador
   if (radio.playing && AudioSys.analyser) {

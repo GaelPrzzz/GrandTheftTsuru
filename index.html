@@ -1,462 +1,550 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Highway Rush · Simulador Arcade</title>
+  <title>GrandTheftTsuru</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;600;700;800&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<div id="viewport">
-  <div class="stage" id="stage">
+  <div id="viewport">
+    <div class="stage" id="stage">
 
-    <!-- Flash rojo en colisión -->
-    <div class="crash-flash" id="crashFlash"></div>
+      <!-- Flash rojo en colisión -->
+      <div class="crash-flash" id="crashFlash"></div>
 
-    <!-- Barra Superior: Selector de Idioma y Menú -->
-    <div class="top-nav-bar">
-      <button class="nav-menu-btn" id="btnNavMenu" title="Menú Principal">
-        <span>☰</span> <span class="nav-txt" data-i18n="menu">MENÚ</span>
-      </button>
-
-      <!-- Selector de Idioma (Banderas) -->
-      <div class="lang-selector">
-        <button class="lang-btn active" id="btnLangEs" title="Español">
-          <span class="flag">🇲🇽</span> <span class="lang-code">ES</span>
+      <!-- Barra Superior: Selector de Idioma y Menú -->
+      <div class="top-nav-bar">
+        <button class="nav-menu-btn" id="btnNavMenu" title="Menú Principal">
+          <span>☰</span> <span class="nav-txt" data-i18n="menu">MENÚ</span>
         </button>
-        <button class="lang-btn" id="btnLangEn" title="English">
-          <span class="flag">🇺🇸</span> <span class="lang-code">EN</span>
-        </button>
-      </div>
-    </div>
 
-    <!-- HUD Arcade Superior: Puntuación y Récord -->
-    <div class="game-hud" id="gameHud">
-      <div class="hud-card">
-        <div class="hud-title" data-i18n="hud_score">SCORE</div>
-        <div class="hud-val" id="hudScore">00000</div>
-      </div>
-      <div class="hud-card">
-        <div class="hud-title" data-i18n="hud_high">HIGH SCORE</div>
-        <div class="hud-val gold" id="hudHighScore">00000</div>
-      </div>
-      <div class="hud-card">
-        <div class="hud-title" data-i18n="hud_dodges">DODGES</div>
-        <div class="hud-val" id="hudDodges">0</div>
-      </div>
-    </div>
-
-    <!-- Banner flotante de esquive cerrado (Near Miss) -->
-    <div class="near-miss-banner" id="nearMissBanner">⚡ NEAR MISS! +250 PTS</div>
-
-    <!-- ============ 1. EXTERIOR (lo que se ve por el parabrisas) ============ -->
-    <canvas id="scene" width="1600" height="1000"></canvas>
-
-    <!-- Reflejo ámbar de las intermitentes en el exterior -->
-    <div class="ext-blink left" id="extBlinkL"></div>
-    <div class="ext-blink right" id="extBlinkR"></div>
-
-    <!-- Gotas del lavaparabrisas -->
-    <div class="washer" id="washer"></div>
-
-    <!-- Limpiaparabrisas -->
-    <div class="wiper wiper-l" id="wiperL"><div class="arm"></div><div class="blade"></div></div>
-    <div class="wiper wiper-r" id="wiperR"><div class="arm"></div><div class="blade"></div></div>
-
-    <!-- ============ 2. INTERIOR VECTORIAL ============ -->
-    <svg class="interior" viewBox="0 0 1600 1000" width="1600" height="1000" aria-hidden="true">
-      <defs>
-        <linearGradient id="gHead" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#d7d7db"/><stop offset="1" stop-color="#a9a9ae"/>
-        </linearGradient>
-        <linearGradient id="gPillarL" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stop-color="#2b2b2f"/><stop offset=".7" stop-color="#4a4a50"/><stop offset="1" stop-color="#5d5d64"/>
-        </linearGradient>
-        <linearGradient id="gPillarR" x1="1" y1="0" x2="0" y2="0">
-          <stop offset="0" stop-color="#2b2b2f"/><stop offset=".7" stop-color="#4a4a50"/><stop offset="1" stop-color="#5d5d64"/>
-        </linearGradient>
-        <linearGradient id="gDashTop" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#5b5b61"/><stop offset=".5" stop-color="#46464c"/><stop offset="1" stop-color="#323236"/>
-        </linearGradient>
-        <linearGradient id="gDashFace" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#3c3c41"/><stop offset=".45" stop-color="#2d2d31"/><stop offset="1" stop-color="#1b1b1e"/>
-        </linearGradient>
-        <linearGradient id="gSilver" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#d9d9de"/><stop offset="1" stop-color="#9c9ca3"/>
-        </linearGradient>
-        <linearGradient id="gConsole" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#36363b"/><stop offset="1" stop-color="#1f1f22"/>
-        </linearGradient>
-        <linearGradient id="gDoor" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#55555b"/><stop offset="1" stop-color="#2c2c30"/>
-        </linearGradient>
-        <linearGradient id="gSeat" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#f1f1f3"/><stop offset="1" stop-color="#b4b4ba"/>
-        </linearGradient>
-        <linearGradient id="gCowl" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#3a3a3f"/><stop offset="1" stop-color="#1e1e21"/>
-        </linearGradient>
-      </defs>
-
-      <!-- Techo -->
-      <path d="M0,0 H1600 V22 Q800,50 0,22 Z" fill="url(#gHead)"/>
-
-      <!-- Pilares A -->
-      <path d="M0,0 L150,0 C125,140 85,330 55,495 L0,515 Z" fill="url(#gPillarL)"/>
-      <path d="M150,0 C125,140 85,330 55,495" stroke="#707077" stroke-width="3" fill="none"/>
-      <path d="M1600,0 L1450,0 C1475,140 1515,330 1545,495 L1600,515 Z" fill="url(#gPillarR)"/>
-      <path d="M1450,0 C1475,140 1515,330 1545,495" stroke="#707077" stroke-width="3" fill="none"/>
-
-      <!-- Tapa superior del salpicadero -->
-      <path d="M0,505 C220,450 520,425 800,425 C1080,425 1380,450 1600,505 L1600,600 L0,600 Z" fill="url(#gDashTop)"/>
-      <path d="M0,505 C220,450 520,425 800,425 C1080,425 1380,450 1600,505" stroke="#7a7a82" stroke-width="3" fill="none"/>
-
-      <!-- Frente del salpicadero -->
-      <path d="M0,565 C300,532 1300,532 1600,565 L1600,1000 L0,1000 Z" fill="url(#gDashFace)"/>
-      <path d="M0,565 C300,532 1300,532 1600,565" stroke="#56565c" stroke-width="2" fill="none"/>
-
-      <!-- Molduras plateadas -->
-      <path d="M0,655 C80,645 150,642 205,645 L205,672 C150,670 80,672 0,684 Z" fill="url(#gSilver)"/>
-      <path d="M960,605 C1120,578 1380,583 1600,628 L1600,664 C1380,622 1130,620 972,650 Z" fill="url(#gSilver)"/>
-
-      <!-- Guantera -->
-      <path d="M1060,695 C1200,680 1380,692 1480,718 L1468,825 C1360,805 1200,797 1072,805 Z" fill="#37373c" stroke="#25252a" stroke-width="3"/>
-      <path d="M1072,800 C1200,792 1360,800 1468,820" stroke="#4b4b51" stroke-width="2" fill="none"/>
-      <rect x="1235" y="720" width="96" height="14" rx="7" fill="#1b1b1e"/>
-      <rect x="1240" y="722" width="86" height="4" rx="2" fill="#6a6a70"/>
-
-      <!-- Rejilla pasajero -->
-      <g transform="translate(1440,565)">
-        <rect width="125" height="52" rx="14" fill="#161618" stroke="#5a5a60" stroke-width="3"/>
-        <path d="M10,13 H115 M10,22 H115 M10,31 H115 M10,40 H115" stroke="#3a3a3f" stroke-width="3"/>
-      </g>
-      <!-- Rejilla conductor -->
-      <g transform="translate(32,580)">
-        <rect width="112" height="46" rx="12" fill="#161618" stroke="#5a5a60" stroke-width="3"/>
-        <path d="M10,12 H102 M10,20 H102 M10,28 H102 M10,36 H102" stroke="#3a3a3f" stroke-width="3"/>
-      </g>
-
-      <!-- Huecos para los pies -->
-      <path d="M120,862 C260,842 540,842 640,862 L660,1000 L100,1000 Z" fill="#121214"/>
-      <path d="M970,862 C1150,842 1400,842 1530,862 L1560,1000 L960,1000 Z" fill="#121214"/>
-
-      <!-- Columna de dirección -->
-      <path d="M345,690 L415,690 L440,875 L320,875 Z" fill="#1a1a1d"/>
-
-      <!-- Puertas -->
-      <path d="M0,600 L46,590 L88,1000 L0,1000 Z" fill="url(#gDoor)"/>
-      <rect x="10" y="700" width="26" height="60" rx="8" fill="#1d1d20"/>
-      <path d="M1600,600 L1554,590 L1512,1000 L1600,1000 Z" fill="url(#gDoor)"/>
-      <rect x="1564" y="700" width="26" height="60" rx="8" fill="#1d1d20"/>
-
-      <!-- Consola central (marco plateado) -->
-      <path d="M640,572 L960,572 L960,842 C960,862 935,867 925,887 L905,1000 L695,1000 L675,887 C665,867 640,862 640,842 Z"
-            fill="url(#gConsole)" stroke="url(#gSilver)" stroke-width="8" stroke-linejoin="round"/>
-      <!-- Rejillas centrales -->
-      <g transform="translate(664,600)">
-        <rect width="128" height="36" rx="8" fill="#141416" stroke="#4d4d53" stroke-width="2"/>
-        <path d="M10,10 H118 M10,18 H118 M10,26 H118" stroke="#37373c" stroke-width="3"/>
-      </g>
-      <g transform="translate(808,600)">
-        <rect width="128" height="36" rx="8" fill="#141416" stroke="#4d4d53" stroke-width="2"/>
-        <path d="M10,10 H118 M10,18 H118 M10,26 H118" stroke="#37373c" stroke-width="3"/>
-      </g>
-
-      <!-- Capó del cuadro de instrumentos -->
-      <path d="M200,566 C205,496 555,496 560,566 Z" fill="url(#gCowl)"/>
-
-      <!-- Asientos -->
-      <path d="M0,952 C50,926 160,926 205,952 L215,1000 L0,1000 Z" fill="url(#gSeat)"/>
-      <path d="M1130,946 C1250,916 1450,916 1580,946 L1600,1000 L1110,1000 Z" fill="url(#gSeat)"/>
-    </svg>
-
-    <!-- Espejo retrovisor -->
-    <div class="mirror">
-      <div class="mirror-stem"></div>
-      <div class="mirror-body"><div class="mirror-glass"><div class="mirror-road" id="mirrorRoad"></div></div></div>
-    </div>
-
-    <!-- ============ 3. CUADRO DE INSTRUMENTOS ============ -->
-    <div class="cluster" id="cluster">
-      <div class="cluster-face"></div>
-
-      <div class="gauge" id="tach">
-        <svg viewBox="-50 -50 100 100">
-          <circle r="48" class="g-face"/>
-          <circle r="47" class="g-rim"/>
-          <g class="ticks"></g>
-          <g class="needle"><polygon points="-2.2,7 2.2,7 0.6,-40 -0.6,-40"/></g>
-          <circle r="5.5" class="g-pin"/>
-        </svg>
-        <div class="g-readout"><span id="rpmTxt">0.0</span><small>x1000 RPM</small></div>
-      </div>
-
-      <div class="mid-lcd" id="midLcd">
-        <div class="lcd-row"><span class="arrow" id="indL">◀</span><span class="gear" id="gearTxt">P</span><span class="arrow" id="indR">▶</span></div>
-        <div class="lcd-row icons">
-          <span class="ico ico-brake on" id="icoBrake">(P)</span>
-          <span class="ico ico-beam" id="icoBeam">
-            <svg viewBox="0 0 24 16"><path d="M11 2c5 0 8 3 8 6s-3 6-8 6z" fill="currentColor"/><path d="M8 4H2M8 8H2M8 12H2" stroke="currentColor" stroke-width="2"/></svg>
-          </span>
+        <!-- Selector de Idioma (Banderas) -->
+        <div class="lang-selector">
+          <button class="lang-btn active" id="btnLangEs" title="Español">
+            <span class="flag">🇲🇽</span> <span class="lang-code">ES</span>
+          </button>
+          <button class="lang-btn" id="btnLangEn" title="English">
+            <span class="flag">🇺🇸</span> <span class="lang-code">EN</span>
+          </button>
         </div>
-        <div class="lcd-row odo"><span id="odoTxt">00042.8</span></div>
       </div>
 
-      <div class="gauge" id="speedo">
-        <svg viewBox="-50 -50 100 100">
-          <circle r="48" class="g-face"/>
-          <circle r="47" class="g-rim"/>
-          <g class="ticks"></g>
-          <g class="needle"><polygon points="-2.2,7 2.2,7 0.6,-40 -0.6,-40"/></g>
-          <circle r="5.5" class="g-pin"/>
-        </svg>
-        <div class="g-readout"><span id="spdTxt">0</span><small>KM/H</small></div>
+      <!-- HUD Arcade Superior: Puntuación y Récord -->
+      <div class="game-hud" id="gameHud">
+        <div class="hud-card">
+          <div class="hud-title" data-i18n="hud_score">SCORE</div>
+          <div class="hud-val" id="hudScore">00000</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-title" data-i18n="hud_high">HIGH SCORE</div>
+          <div class="hud-val gold" id="hudHighScore">00000</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-title" data-i18n="hud_dodges">DODGES</div>
+          <div class="hud-val" id="hudDodges">0</div>
+        </div>
       </div>
-    </div>
 
-    <!-- Palanca de direccionales -->
-    <div class="turn-pod">
-      <button class="btn turn-btn" id="btnTurnL" title="Direccional izquierda">◀</button>
-      <button class="btn turn-btn" id="btnTurnR" title="Direccional derecha">▶</button>
-      <span class="pod-lbl" data-i18n="turn_signals">DIRECCIONALES</span>
-    </div>
+      <!-- Banner flotante de esquive cerrado (Near Miss) -->
+      <div class="near-miss-banner" id="nearMissBanner">⚡ NEAR MISS! +250 PTS</div>
 
-    <!-- Botón de encendido -->
-    <button class="btn start-btn" id="btnStart" title="Encender / apagar motor">
-      <span class="start-ring"></span>
-      <span class="start-txt">ENGINE<b>START</b>STOP</span>
-    </button>
+      <!-- ============ 1. EXTERIOR (lo que se ve por el parabrisas) ============ -->
+      <canvas id="scene" width="1600" height="1000"></canvas>
 
-    <!-- Botones de giro ágiles -->
-    <button class="btn steer-btn left" id="btnSteerL" title="Girar a la izquierda (A / ◀)">⟲</button>
-    <button class="btn steer-btn right" id="btnSteerR" title="Girar a la derecha (D / ▶)">⟳</button>
+      <!-- Reflejo ámbar de las intermitentes en el exterior -->
+      <div class="ext-blink left" id="extBlinkL"></div>
+      <div class="ext-blink right" id="extBlinkR"></div>
 
-    <!-- ============ 4. VOLANTE ============ -->
-    <div class="wheel-wrap">
-      <div class="wheel" id="wheel">
-        <svg viewBox="0 0 400 400" width="400" height="400">
-          <defs>
-            <linearGradient id="wRim" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#45464b"/><stop offset=".5" stop-color="#232427"/><stop offset="1" stop-color="#121214"/>
-            </linearGradient>
-            <linearGradient id="wSpoke" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#4c4d52"/><stop offset=".1" stop-color="#1e1f22"/>
-            </linearGradient>
-            <radialGradient id="wHub" cx=".5" cy=".35" r=".7">
-              <stop offset="0" stop-color="#46474c"/><stop offset="1" stop-color="#18181b"/>
-            </radialGradient>
-            <radialGradient id="wLogo" cx=".4" cy=".3" r=".8">
-              <stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#c9c9cf"/><stop offset="1" stop-color="#7d7d84"/>
-            </radialGradient>
-          </defs>
-          <!-- Radios -->
-          <path class="grab" d="M140,175 C100,172 60,178 26,192 L26,228 C60,242 100,252 145,252 Z" fill="url(#wSpoke)"/>
-          <path class="grab" d="M260,175 C300,172 340,178 374,192 L374,228 C340,242 300,252 255,252 Z" fill="url(#wSpoke)"/>
-          <path class="grab" d="M165,245 C170,300 175,340 178,372 L222,372 C225,340 230,300 235,245 Z" fill="url(#wSpoke)"/>
-          <path d="M40,205 C80,198 115,200 140,205" stroke="#9a9ba2" stroke-width="2" fill="none"/>
-          <path d="M360,205 C320,198 285,200 260,205" stroke="#9a9ba2" stroke-width="2" fill="none"/>
-          <!-- Aro -->
-          <circle class="grab rim" cx="200" cy="200" r="178" fill="none" stroke="url(#wRim)" stroke-width="27"/>
-          <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="2"/>
-          <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1" stroke-dasharray="4 5"/>
-          <rect x="194" y="9" width="12" height="27" rx="3" fill="#c9cbd1"/>
-          <!-- Mandos en el volante -->
-          <g class="wbtn" data-act="volUp"><circle cx="75" cy="213" r="13"/><text x="75" y="218">+</text></g>
-          <g class="wbtn" data-act="volDown"><circle cx="110" cy="218" r="13"/><text x="110" y="223">−</text></g>
-          <g class="wbtn" data-act="play"><circle cx="290" cy="218" r="13"/><text x="290" y="222" class="small">▶❚</text></g>
-          <g class="wbtn" data-act="next"><circle cx="325" cy="213" r="13"/><text x="325" y="217" class="small">⏭</text></g>
-          <!-- Bocina -->
-          <g class="hub" id="hub">
-            <circle cx="200" cy="208" r="62" fill="url(#wHub)" stroke="#55565c" stroke-width="3"/>
-            <circle cx="200" cy="208" r="27" fill="url(#wLogo)"/>
-            <text x="200" y="258" class="hub-txt">AIRBAG</text>
-          </g>
-        </svg>
+      <!-- Gotas del lavaparabrisas -->
+      <div class="washer" id="washer"></div>
+
+      <!-- Limpiaparabrisas -->
+      <div class="wiper wiper-l" id="wiperL">
+        <div class="arm"></div>
+        <div class="blade"></div>
       </div>
-    </div>
+      <div class="wiper wiper-r" id="wiperR">
+        <div class="arm"></div>
+        <div class="blade"></div>
+      </div>
 
-    <!-- ============ 5. CONSOLA CENTRAL ============ -->
-    <div class="screen">
-      <div class="lcd" id="lcd">
-        <div class="scr-top"><span class="band" data-i18n="arcade_traffic">HIGHWAY RUSH</span><span id="clock">12:00</span></div>
-        <div class="scr-main">
-          <div class="disc" id="disc">♪</div>
-          <div class="meta">
-            <div class="st-name" id="stName">Synthwave FM 98.5</div>
-            <div class="st-song" id="stSong">Neon Highway</div>
-            <div class="st-state" id="stState" data-i18n="paused">⏸ En pausa</div>
+      <!-- ============ 2. INTERIOR VECTORIAL ============ -->
+      <svg class="interior" viewBox="0 0 1600 1000" width="1600" height="1000" aria-hidden="true">
+        <defs>
+          <linearGradient id="gHead" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#d7d7db" />
+            <stop offset="1" stop-color="#a9a9ae" />
+          </linearGradient>
+          <linearGradient id="gPillarL" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#2b2b2f" />
+            <stop offset=".7" stop-color="#4a4a50" />
+            <stop offset="1" stop-color="#5d5d64" />
+          </linearGradient>
+          <linearGradient id="gPillarR" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0" stop-color="#2b2b2f" />
+            <stop offset=".7" stop-color="#4a4a50" />
+            <stop offset="1" stop-color="#5d5d64" />
+          </linearGradient>
+          <linearGradient id="gDashTop" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5b5b61" />
+            <stop offset=".5" stop-color="#46464c" />
+            <stop offset="1" stop-color="#323236" />
+          </linearGradient>
+          <linearGradient id="gDashFace" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3c3c41" />
+            <stop offset=".45" stop-color="#2d2d31" />
+            <stop offset="1" stop-color="#1b1b1e" />
+          </linearGradient>
+          <linearGradient id="gSilver" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffffff" />
+            <stop offset=".5" stop-color="#d9d9de" />
+            <stop offset="1" stop-color="#9c9ca3" />
+          </linearGradient>
+          <linearGradient id="gConsole" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#36363b" />
+            <stop offset="1" stop-color="#1f1f22" />
+          </linearGradient>
+          <linearGradient id="gDoor" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#55555b" />
+            <stop offset="1" stop-color="#2c2c30" />
+          </linearGradient>
+          <linearGradient id="gSeat" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f1f1f3" />
+            <stop offset="1" stop-color="#b4b4ba" />
+          </linearGradient>
+          <linearGradient id="gCowl" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3a3a3f" />
+            <stop offset="1" stop-color="#1e1e21" />
+          </linearGradient>
+        </defs>
+
+        <!-- Techo -->
+        <path d="M0,0 H1600 V22 Q800,50 0,22 Z" fill="url(#gHead)" />
+
+        <!-- Pilares A -->
+        <path d="M0,0 L150,0 C125,140 85,330 55,495 L0,515 Z" fill="url(#gPillarL)" />
+        <path d="M150,0 C125,140 85,330 55,495" stroke="#707077" stroke-width="3" fill="none" />
+        <path d="M1600,0 L1450,0 C1475,140 1515,330 1545,495 L1600,515 Z" fill="url(#gPillarR)" />
+        <path d="M1450,0 C1475,140 1515,330 1545,495" stroke="#707077" stroke-width="3" fill="none" />
+
+        <!-- Tapa superior del salpicadero -->
+        <path d="M0,505 C220,450 520,425 800,425 C1080,425 1380,450 1600,505 L1600,600 L0,600 Z"
+          fill="url(#gDashTop)" />
+        <path d="M0,505 C220,450 520,425 800,425 C1080,425 1380,450 1600,505" stroke="#7a7a82" stroke-width="3"
+          fill="none" />
+
+        <!-- Frente del salpicadero -->
+        <path d="M0,565 C300,532 1300,532 1600,565 L1600,1000 L0,1000 Z" fill="url(#gDashFace)" />
+        <path d="M0,565 C300,532 1300,532 1600,565" stroke="#56565c" stroke-width="2" fill="none" />
+
+        <!-- Molduras plateadas -->
+        <path d="M0,655 C80,645 150,642 205,645 L205,672 C150,670 80,672 0,684 Z" fill="url(#gSilver)" />
+        <path d="M960,605 C1120,578 1380,583 1600,628 L1600,664 C1380,622 1130,620 972,650 Z" fill="url(#gSilver)" />
+
+        <!-- Guantera -->
+        <path d="M1060,695 C1200,680 1380,692 1480,718 L1468,825 C1360,805 1200,797 1072,805 Z" fill="#37373c"
+          stroke="#25252a" stroke-width="3" />
+        <path d="M1072,800 C1200,792 1360,800 1468,820" stroke="#4b4b51" stroke-width="2" fill="none" />
+        <rect x="1235" y="720" width="96" height="14" rx="7" fill="#1b1b1e" />
+        <rect x="1240" y="722" width="86" height="4" rx="2" fill="#6a6a70" />
+
+        <!-- Rejilla pasajero -->
+        <g transform="translate(1440,565)">
+          <rect width="125" height="52" rx="14" fill="#161618" stroke="#5a5a60" stroke-width="3" />
+          <path d="M10,13 H115 M10,22 H115 M10,31 H115 M10,40 H115" stroke="#3a3a3f" stroke-width="3" />
+        </g>
+        <!-- Rejilla conductor -->
+        <g transform="translate(32,580)">
+          <rect width="112" height="46" rx="12" fill="#161618" stroke="#5a5a60" stroke-width="3" />
+          <path d="M10,12 H102 M10,20 H102 M10,28 H102 M10,36 H102" stroke="#3a3a3f" stroke-width="3" />
+        </g>
+
+        <!-- Huecos para los pies -->
+        <path d="M120,862 C260,842 540,842 640,862 L660,1000 L100,1000 Z" fill="#121214" />
+        <path d="M970,862 C1150,842 1400,842 1530,862 L1560,1000 L960,1000 Z" fill="#121214" />
+
+        <!-- Columna de dirección -->
+        <path d="M345,690 L415,690 L440,875 L320,875 Z" fill="#1a1a1d" />
+
+        <!-- Puertas -->
+        <path d="M0,600 L46,590 L88,1000 L0,1000 Z" fill="url(#gDoor)" />
+        <rect x="10" y="700" width="26" height="60" rx="8" fill="#1d1d20" />
+        <path d="M1600,600 L1554,590 L1512,1000 L1600,1000 Z" fill="url(#gDoor)" />
+        <rect x="1564" y="700" width="26" height="60" rx="8" fill="#1d1d20" />
+
+        <!-- Consola central (marco plateado) -->
+        <path
+          d="M640,572 L960,572 L960,842 C960,862 935,867 925,887 L905,1000 L695,1000 L675,887 C665,867 640,862 640,842 Z"
+          fill="url(#gConsole)" stroke="url(#gSilver)" stroke-width="8" stroke-linejoin="round" />
+        <!-- Rejillas centrales -->
+        <g transform="translate(664,600)">
+          <rect width="128" height="36" rx="8" fill="#141416" stroke="#4d4d53" stroke-width="2" />
+          <path d="M10,10 H118 M10,18 H118 M10,26 H118" stroke="#37373c" stroke-width="3" />
+        </g>
+        <g transform="translate(808,600)">
+          <rect width="128" height="36" rx="8" fill="#141416" stroke="#4d4d53" stroke-width="2" />
+          <path d="M10,10 H118 M10,18 H118 M10,26 H118" stroke="#37373c" stroke-width="3" />
+        </g>
+
+        <!-- Capó del cuadro de instrumentos -->
+        <path d="M200,566 C205,496 555,496 560,566 Z" fill="url(#gCowl)" />
+
+        <!-- Asientos -->
+        <path d="M0,952 C50,926 160,926 205,952 L215,1000 L0,1000 Z" fill="url(#gSeat)" />
+        <path d="M1130,946 C1250,916 1450,916 1580,946 L1600,1000 L1110,1000 Z" fill="url(#gSeat)" />
+      </svg>
+
+      <!-- Espejos retrovisores laterales (izquierdo y derecho) -->
+      <div class="side-mirror side-mirror-left" id="sideMirrorLeft">
+        <div class="side-mirror-housing">
+          <div class="side-mirror-glass">
+            <div class="side-mirror-road left" id="mirrorRoadL"></div>
           </div>
         </div>
-        <div class="viz" id="viz"></div>
-        <div class="scr-vol"><span>VOL</span><div class="vol-track"><div class="vol-fill" id="volFill"></div></div><span id="volTxt">60</span></div>
       </div>
-    </div>
-
-    <div class="radio-row">
-      <button class="btn rbtn" id="btnPrev" title="Emisora anterior">⏮</button>
-      <button class="btn rbtn play" id="btnPlay" title="Reproducir / pausar">▶</button>
-      <button class="btn rbtn" id="btnNext" title="Emisora siguiente">⏭</button>
-      <button class="btn rbtn" id="btnVolDown" title="Bajar volumen">🔉</button>
-      <button class="btn rbtn" id="btnVolUp" title="Subir volumen">🔊</button>
-    </div>
-
-    <div class="switch-row">
-      <button class="btn sw" id="btnLights" title="Luces">
-        <span class="sw-ico"><svg viewBox="0 0 24 16"><path d="M11 2c5 0 8 3 8 6s-3 6-8 6z" fill="currentColor"/><path d="M8 4H2M8 8H2M8 12H2" stroke="currentColor" stroke-width="2"/></svg></span>
-        <span class="sw-lbl" data-i18n="btn_lights">LUCES</span><span class="sw-sub" id="lightsSub">OFF</span><span class="led" id="ledLights"></span>
-      </button>
-      <button class="btn sw hazard" id="btnHazard" title="Hazard">
-        <span class="sw-ico"><svg viewBox="0 0 24 22"><path d="M12 2 L22 20 H2 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M12 9 L16.5 17 H7.5 Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></span>
-        <span class="sw-lbl" data-i18n="btn_hazard">HAZARD</span><span class="sw-sub" id="hazardSub">OFF</span><span class="led" id="ledHazard"></span>
-      </button>
-      <button class="btn sw" id="btnWiper" title="Wiper">
-        <span class="sw-ico"><svg viewBox="0 0 24 18"><path d="M2 16 A12 12 0 0 1 22 16" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 16 L5 6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></span>
-        <span class="sw-lbl" data-i18n="btn_wiper">LIMPIA</span><span class="sw-sub" id="wiperSub">OFF</span><span class="led" id="ledWiper"></span>
-      </button>
-      <button class="btn sw" id="btnHandbrake" title="Freno de mano">
-        <span class="sw-ico pbrake">(P)</span>
-        <span class="sw-lbl" data-i18n="btn_handbrake">F. MANO</span><span class="sw-sub" id="hbSub">ON</span><span class="led red" id="ledHandbrake"></span>
-      </button>
-    </div>
-
-    <!-- Palanca de cambios -->
-    <div class="shifter">
-      <div class="gate"></div>
-      <div class="boot"></div>
-      <div class="knob" id="knob">P</div>
-      <div class="gear-opts">
-        <button class="gopt active" data-gear="P">P</button>
-        <button class="gopt" data-gear="R">R</button>
-        <button class="gopt" data-gear="N">N</button>
-        <button class="gopt" data-gear="D">D</button>
+      <div class="side-mirror side-mirror-right" id="sideMirrorRight">
+        <div class="side-mirror-housing">
+          <div class="side-mirror-glass">
+            <div class="side-mirror-road right" id="mirrorRoadR"></div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <!-- ============ 6. PEDALES ============ -->
-    <button class="pedal brake" id="pedalBrake" title="Freno (S / Espacio / Mouse)">
-      <span class="pedal-plate"></span><span class="pedal-lbl" data-i18n="pedal_brake">FRENO</span>
-    </button>
-    <button class="pedal gas" id="pedalGas" title="Acelerador (W / Mouse)">
-      <span class="pedal-plate"></span><span class="pedal-lbl" data-i18n="pedal_gas">ACEL.</span>
-    </button>
+      <!-- Espejo retrovisor central -->
+      <div class="mirror" id="centralMirror">
+        <div class="mirror-stem"></div>
+        <div class="mirror-body">
+          <div class="mirror-glass">
+            <div class="mirror-road" id="mirrorRoad"></div>
+          </div>
+        </div>
+      </div>
 
-    <!-- Avisos flotantes -->
-    <div class="toast" id="toast"></div>
+      <!-- ============ 3. CUADRO DE INSTRUMENTOS ============ -->
+      <div class="cluster" id="cluster">
+        <div class="cluster-face"></div>
 
-    <!-- =========================================================
+        <div class="gauge" id="tach">
+          <svg viewBox="-50 -50 100 100">
+            <circle r="48" class="g-face" />
+            <circle r="47" class="g-rim" />
+            <g class="ticks"></g>
+            <g class="needle">
+              <polygon points="-2.2,7 2.2,7 0.6,-40 -0.6,-40" />
+            </g>
+            <circle r="5.5" class="g-pin" />
+          </svg>
+          <div class="g-readout"><span id="rpmTxt">0.0</span><small>x1000 RPM</small></div>
+        </div>
+
+        <div class="mid-lcd" id="midLcd">
+          <div class="lcd-row"><span class="arrow" id="indL">◀</span><span class="gear" id="gearTxt">P</span><span
+              class="arrow" id="indR">▶</span></div>
+          <div class="lcd-row icons">
+            <span class="ico ico-brake on" id="icoBrake">(P)</span>
+            <span class="ico ico-beam" id="icoBeam">
+              <svg viewBox="0 0 24 16">
+                <path d="M11 2c5 0 8 3 8 6s-3 6-8 6z" fill="currentColor" />
+                <path d="M8 4H2M8 8H2M8 12H2" stroke="currentColor" stroke-width="2" />
+              </svg>
+            </span>
+          </div>
+          <div class="lcd-row odo"><span id="odoTxt">00042.8</span></div>
+        </div>
+
+        <div class="gauge" id="speedo">
+          <svg viewBox="-50 -50 100 100">
+            <circle r="48" class="g-face" />
+            <circle r="47" class="g-rim" />
+            <g class="ticks"></g>
+            <g class="needle">
+              <polygon points="-2.2,7 2.2,7 0.6,-40 -0.6,-40" />
+            </g>
+            <circle r="5.5" class="g-pin" />
+          </svg>
+          <div class="g-readout"><span id="spdTxt">0</span><small>KM/H</small></div>
+        </div>
+      </div>
+
+      <!-- Palanca de direccionales -->
+      <div class="turn-pod">
+        <button class="btn turn-btn" id="btnTurnL" title="Direccional izquierda">◀</button>
+        <button class="btn turn-btn" id="btnTurnR" title="Direccional derecha">▶</button>
+        <span class="pod-lbl" data-i18n="turn_signals">DIRECCIONALES</span>
+      </div>
+
+      <!-- Botón de encendido -->
+      <button class="btn start-btn" id="btnStart" title="Encender / apagar motor">
+        <span class="start-ring"></span>
+        <span class="start-txt">ENGINE<b>START</b>STOP</span>
+      </button>
+
+      <!-- Botones de giro ágiles -->
+      <button class="btn steer-btn left" id="btnSteerL" title="Girar a la izquierda (A / ◀)">⟲</button>
+      <button class="btn steer-btn right" id="btnSteerR" title="Girar a la derecha (D / ▶)">⟳</button>
+
+      <!-- ============ 4. VOLANTE ============ -->
+      <div class="wheel-wrap">
+        <div class="wheel" id="wheel">
+          <svg viewBox="0 0 400 400" width="400" height="400">
+            <defs>
+              <linearGradient id="wRim" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#45464b" />
+                <stop offset=".5" stop-color="#232427" />
+                <stop offset="1" stop-color="#121214" />
+              </linearGradient>
+              <linearGradient id="wSpoke" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#4c4d52" />
+                <stop offset=".1" stop-color="#1e1f22" />
+              </linearGradient>
+              <radialGradient id="wHub" cx=".5" cy=".35" r=".7">
+                <stop offset="0" stop-color="#46474c" />
+                <stop offset="1" stop-color="#18181b" />
+              </radialGradient>
+              <radialGradient id="wLogo" cx=".4" cy=".3" r=".8">
+                <stop offset="0" stop-color="#ffffff" />
+                <stop offset=".6" stop-color="#c9c9cf" />
+                <stop offset="1" stop-color="#7d7d84" />
+              </radialGradient>
+            </defs>
+            <!-- Radios -->
+            <path class="grab" d="M140,175 C100,172 60,178 26,192 L26,228 C60,242 100,252 145,252 Z"
+              fill="url(#wSpoke)" />
+            <path class="grab" d="M260,175 C300,172 340,178 374,192 L374,228 C340,242 300,252 255,252 Z"
+              fill="url(#wSpoke)" />
+            <path class="grab" d="M165,245 C170,300 175,340 178,372 L222,372 C225,340 230,300 235,245 Z"
+              fill="url(#wSpoke)" />
+            <path d="M40,205 C80,198 115,200 140,205" stroke="#9a9ba2" stroke-width="2" fill="none" />
+            <path d="M360,205 C320,198 285,200 260,205" stroke="#9a9ba2" stroke-width="2" fill="none" />
+            <!-- Aro -->
+            <circle class="grab rim" cx="200" cy="200" r="178" fill="none" stroke="url(#wRim)" stroke-width="27" />
+            <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="2" />
+            <circle cx="200" cy="200" r="178" fill="none" stroke="rgba(255,255,255,.13)" stroke-width="1"
+              stroke-dasharray="4 5" />
+            <rect x="194" y="9" width="12" height="27" rx="3" fill="#c9cbd1" />
+            <!-- Mandos en el volante -->
+            <g class="wbtn" data-act="volUp">
+              <circle cx="75" cy="213" r="13" /><text x="75" y="218">+</text>
+            </g>
+            <g class="wbtn" data-act="volDown">
+              <circle cx="110" cy="218" r="13" /><text x="110" y="223">−</text>
+            </g>
+            <g class="wbtn" data-act="play">
+              <circle cx="290" cy="218" r="13" /><text x="290" y="222" class="small">▶❚</text>
+            </g>
+            <g class="wbtn" data-act="next">
+              <circle cx="325" cy="213" r="13" /><text x="325" y="217" class="small">⏭</text>
+            </g>
+            <!-- Bocina -->
+            <g class="hub" id="hub">
+              <circle cx="200" cy="208" r="62" fill="url(#wHub)" stroke="#55565c" stroke-width="3" />
+              <circle cx="200" cy="208" r="27" fill="url(#wLogo)" />
+              <text x="200" y="258" class="hub-txt">AIRBAG</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- ============ 5. CONSOLA CENTRAL ============ -->
+      <div class="screen">
+        <div class="lcd" id="lcd">
+          <div class="scr-top"><span id="clock">12:00</span></div>
+          <div class="scr-main">
+            <div class="disc" id="disc">♪</div>
+            <div class="meta">
+              <div class="st-name" id="stName">Synthwave FM 98.5</div>
+              <div class="st-song" id="stSong">Neon Highway</div>
+              <div class="st-state" id="stState" data-i18n="paused">⏸ En pausa</div>
+            </div>
+          </div>
+          <div class="viz" id="viz"></div>
+          <div class="scr-vol"><span>VOL</span>
+            <div class="vol-track">
+              <div class="vol-fill" id="volFill"></div>
+            </div><span id="volTxt">60</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="radio-row">
+        <button class="btn rbtn" id="btnPrev" title="Emisora anterior">⏮</button>
+        <button class="btn rbtn play" id="btnPlay" title="Reproducir / pausar">▶</button>
+        <button class="btn rbtn" id="btnNext" title="Emisora siguiente">⏭</button>
+        <button class="btn rbtn" id="btnVolDown" title="Bajar volumen">🔉</button>
+        <button class="btn rbtn" id="btnVolUp" title="Subir volumen">🔊</button>
+      </div>
+
+      <div class="switch-row">
+        <button class="btn sw" id="btnLights" title="Luces">
+          <span class="sw-ico"><svg viewBox="0 0 24 16">
+              <path d="M11 2c5 0 8 3 8 6s-3 6-8 6z" fill="currentColor" />
+              <path d="M8 4H2M8 8H2M8 12H2" stroke="currentColor" stroke-width="2" />
+            </svg></span>
+          <span class="sw-lbl" data-i18n="btn_lights">LUCES</span><span class="sw-sub" id="lightsSub">OFF</span><span
+            class="led" id="ledLights"></span>
+        </button>
+        <button class="btn sw hazard" id="btnHazard" title="Hazard">
+          <span class="sw-ico"><svg viewBox="0 0 24 22">
+              <path d="M12 2 L22 20 H2 Z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round" />
+              <path d="M12 9 L16.5 17 H7.5 Z" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linejoin="round" />
+            </svg></span>
+          <span class="sw-lbl" data-i18n="btn_hazard">HAZARD</span><span class="sw-sub" id="hazardSub">OFF</span><span
+            class="led" id="ledHazard"></span>
+        </button>
+        <button class="btn sw" id="btnWiper" title="Wiper">
+          <span class="sw-ico"><svg viewBox="0 0 24 18">
+              <path d="M2 16 A12 12 0 0 1 22 16" fill="none" stroke="currentColor" stroke-width="2" />
+              <path d="M12 16 L5 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" />
+            </svg></span>
+          <span class="sw-lbl" data-i18n="btn_wiper">LIMPIA</span><span class="sw-sub" id="wiperSub">OFF</span><span
+            class="led" id="ledWiper"></span>
+        </button>
+        <button class="btn sw" id="btnHandbrake" title="Freno de mano">
+          <span class="sw-ico pbrake">(P)</span>
+          <span class="sw-lbl" data-i18n="btn_handbrake">F. MANO</span><span class="sw-sub" id="hbSub">ON</span><span
+            class="led red" id="ledHandbrake"></span>
+        </button>
+      </div>
+
+      <!-- Palanca de cambios -->
+      <div class="shifter">
+        <div class="gate"></div>
+        <div class="boot"></div>
+        <div class="knob" id="knob">P</div>
+        <div class="gear-opts">
+          <button class="gopt active" data-gear="P">P</button>
+          <button class="gopt" data-gear="R">R</button>
+          <button class="gopt" data-gear="N">N</button>
+          <button class="gopt" data-gear="D">D</button>
+        </div>
+      </div>
+
+      <!-- ============ 6. PEDALES ============ -->
+      <button class="pedal brake" id="pedalBrake" title="Freno (S / Espacio / Mouse)">
+        <span class="pedal-plate"></span><span class="pedal-lbl" data-i18n="pedal_brake">FRENO</span>
+      </button>
+      <button class="pedal gas" id="pedalGas" title="Acelerador (W / Mouse)">
+        <span class="pedal-plate"></span><span class="pedal-lbl" data-i18n="pedal_gas">ACEL.</span>
+      </button>
+
+      <!-- Avisos flotantes -->
+      <div class="toast" id="toast"></div>
+
+      <!-- =========================================================
          7. MENÚ PRINCIPAL / INTERFAZ DE INICIO (OVERLAY)
          ========================================================= -->
-    <div class="main-menu-overlay" id="mainMenu">
-      <div class="menu-box">
-        
-        <!-- Logo del juego con fallback automático -->
-        <div class="game-logo-container">
-          <img src="recursos/logo.png" alt="Logo" class="game-logo-img" id="gameLogoImg" onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
-          <div class="game-logo-fallback" id="logoFallback">
-            <span class="logo-car-icon">🏎️</span>
-            <span class="logo-neon-text">HIGHWAY RUSH</span>
-          </div>
-        </div>
+      <div class="main-menu-overlay" id="mainMenu">
+        <div class="menu-box">
 
-        <h1 class="menu-game-title">HIGHWAY RUSH</h1>
-        <p class="menu-game-slogan" id="menuSlogan">"Si mi madre me dio la vida, la velocidad me la quita"</p>
-
-        <!-- Botones Principales del Menú -->
-        <div class="menu-actions">
-          <button class="menu-btn btn-play-main" id="btnMenuPlay">
-            <span class="btn-icon">▶</span> <span class="btn-text" data-i18n="menu_play">JUGAR</span>
-          </button>
-          <button class="menu-btn" id="btnMenuTutorial">
-            <span class="btn-icon">📖</span> <span class="btn-text" data-i18n="menu_tutorial">TUTORIAL</span>
-          </button>
-          <button class="menu-btn" id="btnMenuCredits">
-            <span class="btn-icon">👥</span> <span class="btn-text" data-i18n="menu_credits">CRÉDITOS</span>
-          </button>
-        </div>
-
-        <div class="menu-footer-hint" data-i18n="menu_hint">Presiona JUGAR para entrar a la pista a toda velocidad</div>
-      </div>
-    </div>
-
-    <!-- MODAL DE TUTORIAL / CÓMO JUGAR -->
-    <div class="modal-overlay" id="tutorialModal">
-      <div class="modal-card">
-        <h2 class="modal-title" data-i18n="tut_title">📖 Cómo Jugar</h2>
-        <div class="modal-body tutorial-content" id="tutorialContent">
-          <!-- El contenido se inyecta dinámicamente según idioma -->
-        </div>
-        <button class="modal-close-btn" id="btnCloseTutorial" data-i18n="btn_understand">¡Entendido! Volver</button>
-      </div>
-    </div>
-
-    <!-- MODAL DE CRÉDITOS -->
-    <div class="modal-overlay" id="creditsModal">
-      <div class="modal-card credits-card">
-        <h2 class="modal-title" data-i18n="credits_title">👥 Créditos del Proyecto</h2>
-        
-        <div class="credits-grid">
-          <div class="credit-item">
-            <div class="credit-role" data-i18n="dev_team">DESARROLLADORES</div>
-            <div class="credit-name highlight">Gael Perez</div>
-            <div class="credit-name highlight">Luis Ramos</div>
-          </div>
-          
-          <div class="credit-item">
-            <div class="credit-role" data-i18n="subject">MATERIA</div>
-            <div class="credit-name">Inglés</div>
+          <!-- Logo del juego con fallback automático -->
+          <div class="game-logo-container">
+            <img src="recursos/logo.png" alt="Logo" class="game-logo-img" id="gameLogoImg"
+              onerror="this.style.display='none'; document.getElementById('logoFallback').style.display='flex';">
+            <div class="game-logo-fallback" id="logoFallback">
+              <span class="logo-car-icon">🏎️</span>
+            </div>
           </div>
 
-          <div class="credit-item">
-            <div class="credit-role" data-i18n="group">GRUPO</div>
-            <div class="credit-name">TI7-3</div>
+          <p class="menu-game-slogan" id="menuSlogan">"Si mi madre me dio la vida, la velocidad me la quita"</p>
+
+          <!-- Botones Principales del Menú -->
+          <div class="menu-actions">
+            <button class="menu-btn btn-play-main" id="btnMenuPlay">
+              <span class="btn-icon">▶</span> <span class="btn-text" data-i18n="menu_play">JUGAR</span>
+            </button>
+            <button class="menu-btn" id="btnMenuTutorial">
+              <span class="btn-icon">📖</span> <span class="btn-text" data-i18n="menu_tutorial">TUTORIAL</span>
+            </button>
+            <button class="menu-btn" id="btnMenuCredits">
+              <span class="btn-icon">👥</span> <span class="btn-text" data-i18n="menu_credits">CRÉDITOS</span>
+            </button>
           </div>
 
-          <div class="credit-item">
-            <div class="credit-role" data-i18n="teacher">PROFESORA</div>
-            <div class="credit-name">Irma Leticia Zepeda Andrade</div>
+          <div class="menu-footer-hint" data-i18n="menu_hint">Presiona JUGAR para entrar a la pista a toda velocidad
           </div>
-        </div>
-
-        <div class="credit-slogan-box">
-          <span class="quote-mark">“</span>
-          <span id="creditSloganTxt">Si mi madre me dio la vida, la velocidad me la quita</span>
-          <span class="quote-mark">”</span>
-        </div>
-
-        <button class="modal-close-btn" id="btnCloseCredits" data-i18n="btn_back">Volver al Menú</button>
-      </div>
-    </div>
-
-    <!-- MODAL DE GAME OVER -->
-    <div class="game-over-modal" id="gameOverModal">
-      <div class="game-over-card">
-        <div class="go-title" data-i18n="go_title">💥 GAME OVER</div>
-        <div class="go-reason" id="goReason">¡Colisión frontal con el tráfico!</div>
-        <div class="go-scores">
-          <div class="go-item">
-            <div class="go-lbl" data-i18n="hud_score">SCORE FINAL</div>
-            <div class="go-val" id="goScore">0</div>
-          </div>
-          <div class="go-item">
-            <div class="go-lbl" data-i18n="hud_high">RÉCORD</div>
-            <div class="go-val high" id="goHighScore">0</div>
-          </div>
-          <div class="go-item">
-            <div class="go-lbl" data-i18n="hud_dodges">DODGES</div>
-            <div class="go-val" id="goDodges">0</div>
-          </div>
-        </div>
-        <div class="go-buttons">
-          <button class="btn-restart" id="btnRestart" data-i18n="btn_restart">🔄 JUGAR DE NUEVO</button>
-          <button class="btn-to-menu" id="btnGoMenu" data-i18n="btn_menu_return">🏠 Menú Principal</button>
         </div>
       </div>
-    </div>
 
+      <!-- MODAL DE TUTORIAL / CÓMO JUGAR -->
+      <div class="modal-overlay" id="tutorialModal">
+        <div class="modal-card">
+          <h2 class="modal-title" data-i18n="tut_title">📖 Cómo Jugar</h2>
+          <div class="modal-body tutorial-content" id="tutorialContent">
+            <!-- El contenido se inyecta dinámicamente según idioma -->
+          </div>
+          <button class="modal-close-btn" id="btnCloseTutorial" data-i18n="btn_understand">¡Entendido! Volver</button>
+        </div>
+      </div>
+
+      <!-- MODAL DE CRÉDITOS -->
+      <div class="modal-overlay" id="creditsModal">
+        <div class="modal-card credits-card">
+          <h2 class="modal-title" data-i18n="credits_title">👥 Créditos del Proyecto</h2>
+
+          <div class="credits-grid">
+            <div class="credit-item">
+              <div class="credit-role" data-i18n="dev_team">DESARROLLADORES</div>
+              <div class="credit-name highlight">Gael Perez</div>
+              <div class="credit-name highlight">Luis Ramos</div>
+            </div>
+
+            <div class="credit-item">
+              <div class="credit-role" data-i18n="subject">MATERIA</div>
+              <div class="credit-name">Inglés</div>
+            </div>
+
+            <div class="credit-item">
+              <div class="credit-role" data-i18n="group">GRUPO</div>
+              <div class="credit-name">TI7-3</div>
+            </div>
+
+            <div class="credit-item">
+              <div class="credit-role" data-i18n="teacher">PROFESORA</div>
+              <div class="credit-name">Irma Leticia Zepeda Andrade</div>
+            </div>
+          </div>
+
+          <button class="modal-close-btn" id="btnCloseCredits" data-i18n="btn_back">Volver al Menú</button>
+        </div>
+      </div>
+
+      <!-- MODAL DE GAME OVER -->
+      <div class="game-over-modal" id="gameOverModal">
+        <div class="game-over-card">
+          <div class="go-title" data-i18n="go_title">💥 GAME OVER</div>
+          <div class="go-reason" id="goReason">¡Colisión frontal con el tráfico!</div>
+          <div class="go-scores">
+            <div class="go-item">
+              <div class="go-lbl" data-i18n="hud_score">SCORE FINAL</div>
+              <div class="go-val" id="goScore">0</div>
+            </div>
+            <div class="go-item">
+              <div class="go-lbl" data-i18n="hud_high">RÉCORD</div>
+              <div class="go-val high" id="goHighScore">0</div>
+            </div>
+            <div class="go-item">
+              <div class="go-lbl" data-i18n="hud_dodges">DODGES</div>
+              <div class="go-val" id="goDodges">0</div>
+            </div>
+          </div>
+          <div class="go-buttons">
+            <button class="btn-restart" id="btnRestart" data-i18n="btn_restart">🔄 JUGAR DE NUEVO</button>
+            <button class="btn-to-menu" id="btnGoMenu" data-i18n="btn_menu_return">🏠 Menú Principal</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
-</div>
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
+
 </html>
