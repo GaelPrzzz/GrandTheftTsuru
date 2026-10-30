@@ -450,148 +450,169 @@ const AudioSys = {
 };
 
 /* ---------------------------------------------------------
-   4. Radio
+   4. Radio con Canciones MP3 de la Carpeta musica/
    --------------------------------------------------------- */
-const STATIONS = [
-  { name: 'Synthwave FM 98.5', song: 'Neon Highway', bpm: 104, style: 'synth',
-    chords: [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]] },
-  { name: 'Lo-Fi Chill 102.3', song: 'Sunday Drive', bpm: 80, style: 'lofi',
-    chords: [[50, 53, 57, 60], [55, 59, 62, 65], [48, 52, 55, 59], [57, 60, 64, 67]] },
-  { name: 'Funk Drive 105.7', song: 'Groove Machine', bpm: 112, style: 'funk',
-    chords: [[52, 55, 59, 62], [57, 61, 64, 67], [52, 55, 59, 62], [54, 57, 61, 64]] },
+const TRACKS = [
+  { name: 'Chalino Sanchez', song: 'Alma Enamorada', file: 'Alma Enamorada - Chalino Sanchez.mp3' },
+  { name: 'Los tucanes de Tijuana', song: 'El centenario', file: 'El centenario - Los tucanes de Tijuana.mp3' },
+  { name: 'Junior H x Peso Pluma', song: 'El Tsurito', file: 'El Tsurito - Junior H x Peso Pluma x Gabito Ballesteros.mp3' },
+  { name: 'Victor Cibrian', song: 'En El Radio Un Cochinero', file: 'En El Radio Un Cochinero - Victor Cibrian.mp3' },
+  { name: 'Peso Pluma', song: 'Gavilán II', file: 'Gavilán II - Peso Pluma.mp3' },
+  { name: 'Los Tigres del Norte', song: 'Jefe de Jefes', file: 'jefe de jefes - los tigres del norte.mp3' },
+  { name: 'Los Tigres del Norte', song: 'La Granja', file: 'La Granja - Los Tigres del Norte.mp3' },
+  { name: 'Peso Pluma', song: 'La People', file: 'La People-PesoPluma.mp3' },
+  { name: 'Bad Bunny', song: 'Neverita', file: 'neverita - bad bunny.mp3' },
 ];
-const PATTERNS = {
-  synth: { kick: 'x...x...x...x...', snare: '....x.......x...', hat: '..x...x...x...x.',
-           bass: [0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0, 0, 0, 12, 0], bassWave: 'sawtooth',
-           pad: 'sawtooth', arp: true },
-  lofi:  { kick: 'x......x..x.....', snare: '....x.......x...', hat: 'x.x.x.x.x.x.x.x.',
-           bass: [0, null, null, null, null, null, null, 7, null, null, 0, null, null, null, null, null], bassWave: 'sine',
-           pad: 'triangle', keys: true },
-  funk:  { kick: 'x..x..x...x..x..', snare: '....x..x....x...', hat: 'xxxxxxxxxxxxxxxx',
-           bass: [0, null, 12, 0, null, 0, 10, null, 0, null, 12, null, 7, null, 10, 12], bassWave: 'square',
-           pad: null, stabs: '..x...x...x..x..' },
-};
-const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
 const radio = {
-  playing: false, idx: 0, vol: 60, step: 0, nextTime: 0, timer: null,
+  playing: false,
+  idx: 0,
+  vol: 75,
+  audioEl: null,
+
+  initAudio() {
+    if (this.audioEl) return;
+    this.audioEl = new Audio();
+    this.audioEl.preload = 'auto';
+
+    this.audioEl.addEventListener('ended', () => {
+      this.change(1);
+    });
+
+    this.audioEl.addEventListener('play', () => {
+      this.playing = true;
+      this.ui();
+    });
+
+    this.audioEl.addEventListener('pause', () => {
+      this.playing = false;
+      this.ui();
+    });
+
+    this.audioEl.addEventListener('error', (e) => {
+      console.error('Error al reproducir audio:', this.audioEl.src, this.audioEl.error);
+    });
+  },
+
+  loadTrack(autoPlay = true) {
+    this.initAudio();
+    const track = TRACKS[this.idx];
+    const encodedFile = encodeURIComponent(track.file);
+    this.audioEl.src = 'musica/' + encodedFile;
+    this.applyVolume();
+
+    if (autoPlay) {
+      this.audioEl.play().then(() => {
+        this.playing = true;
+        this.ui();
+      }).catch((err) => {
+        console.warn('Autoplay bloqueado o pendiente de interacción:', err);
+        this.ui();
+      });
+    } else {
+      this.ui();
+    }
+  },
 
   toggle() {
     AudioSys.init();
-    if (!AudioSys.ctx) return;
-    this.playing ? this.pause() : this.play();
+    this.initAudio();
+    if (this.playing && !this.audioEl.paused) {
+      this.pause();
+    } else {
+      this.play();
+    }
   },
+
   play() {
-    this.playing = true;
-    this.step = 0;
-    this.nextTime = AudioSys.ctx.currentTime + 0.08;
-    clearInterval(this.timer);
-    this.timer = setInterval(() => this.schedule(), 25);
+    AudioSys.init();
+    this.initAudio();
+
+    const currentSrc = this.audioEl.getAttribute('src');
+    if (!currentSrc) {
+      this.loadTrack(true);
+      return;
+    }
+
     this.applyVolume();
-    this.ui();
+    this.audioEl.play().then(() => {
+      this.playing = true;
+      this.ui();
+    }).catch((err) => {
+      console.warn('Error al reproducir, recargando pista:', err);
+      this.loadTrack(true);
+    });
   },
+
   pause() {
     this.playing = false;
-    clearInterval(this.timer);
-    this.applyVolume();
+    if (this.audioEl) {
+      this.audioEl.pause();
+    }
     this.ui();
   },
+
   change(d) {
-    this.idx = (this.idx + d + STATIONS.length) % STATIONS.length;
-    this.step = 0;
-    if (this.playing && AudioSys.ctx) { this.nextTime = AudioSys.ctx.currentTime + 0.25; this.static(); }
+    AudioSys.init();
+    this.idx = (this.idx + d + TRACKS.length) % TRACKS.length;
+    if (this.playing) {
+      this.static();
+    }
     const lcd = $('lcd');
-    lcd.classList.remove('tuning'); void lcd.offsetWidth; lcd.classList.add('tuning');
-    this.ui();
+    if (lcd) {
+      lcd.classList.remove('tuning');
+      void lcd.offsetWidth;
+      lcd.classList.add('tuning');
+    }
+    this.loadTrack(this.playing);
   },
+
   setVol(d) {
     this.vol = clamp(this.vol + d, 0, 100);
     this.applyVolume();
     this.ui();
   },
-  applyVolume() {
-    if (!AudioSys.ctx) return;
-    const g = this.playing ? Math.pow(this.vol / 100, 1.6) * 0.6 : 0;
-    AudioSys.musicBus.gain.setTargetAtTime(g, AudioSys.ctx.currentTime, 0.05);
-  },
-  static() {
-    const c = AudioSys.ctx, t = c.currentTime;
-    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    s.buffer = AudioSys.noise; f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.6;
-    g.gain.setValueAtTime(0.25, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
-    s.connect(f).connect(g).connect(AudioSys.musicBus);
-    s.start(t, Math.random(), 0.3);
-  },
-  ui() {
-    const st = STATIONS[this.idx];
-    $('stName').textContent = st.name;
-    $('stSong').textContent = st.song;
-    $('stState').textContent = this.playing ? '▶ Reproduciendo' : '⏸ En pausa';
-    $('btnPlay').textContent = this.playing ? '❚❚' : '▶';
-    $('btnPlay').classList.toggle('on', this.playing);
-    $('disc').classList.toggle('spin', this.playing);
-    $('volFill').style.width = this.vol + '%';
-    $('volTxt').textContent = this.vol;
-  },
 
-  schedule() {
-    const c = AudioSys.ctx;
-    const st = STATIONS[this.idx], p = PATTERNS[st.style];
-    const spb = 60 / st.bpm / 4;
-    while (this.nextTime < c.currentTime + 0.12) {
-      this.playStep(this.step, this.nextTime, st, p, spb);
-      this.nextTime += spb;
-      this.step = (this.step + 1) % 64;
+  applyVolume() {
+    const normVol = clamp(this.vol / 100, 0, 1);
+    if (this.audioEl) {
+      this.audioEl.volume = normVol;
     }
   },
-  playStep(s, t, st, p, spb) {
-    const i = s % 16;
-    const chord = st.chords[Math.floor(s / 16)];
-    if (p.kick[i] === 'x') this.kick(t);
-    if (p.snare[i] === 'x') this.snare(t);
-    if (p.hat[i] === 'x') this.hat(t, st.style === 'funk' ? (i % 2 ? 0.035 : 0.07) : 0.06);
-    const b = p.bass[i];
-    if (b != null) this.note(t, chord[0] - 24 + b, spb * 1.7, p.bassWave, 0.2, 700);
-    if (p.pad && i === 0) chord.forEach((n) => this.note(t, n, spb * 15.5, p.pad, 0.045, 1300, 0.25));
-    if (p.arp && i % 2 === 0) this.note(t, chord[(i / 2) % chord.length] + 12, spb * 1.4, 'square', 0.045, 2600);
-    if (p.keys && (i === 0 || i === 6 || i === 10)) chord.forEach((n) => this.note(t, n + 12, spb * 3, 'sine', 0.05, 3000, 0.01));
-    if (p.stabs && p.stabs[i] === 'x') chord.forEach((n) => this.note(t, n + 12, spb * 0.7, 'square', 0.035, 1800));
+
+  static() {
+    if (!AudioSys.ctx) return;
+    try {
+      const c = AudioSys.ctx, t = c.currentTime;
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = AudioSys.noise; f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.6;
+      g.gain.setValueAtTime(0.18, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      s.connect(f).connect(g).connect(AudioSys.master || c.destination);
+      s.start(t, Math.random(), 0.22);
+    } catch (_) {}
   },
 
-  note(t, midi, dur, type, vol, cutoff, attack = 0.006) {
-    const c = AudioSys.ctx;
-    const o = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-    o.type = type; o.frequency.value = mtof(midi);
-    f.type = 'lowpass'; f.frequency.value = cutoff;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(vol, t + attack);
-    g.gain.setTargetAtTime(0, t + dur * 0.6, dur * 0.2);
-    o.connect(f).connect(g).connect(AudioSys.musicBus);
-    o.start(t); o.stop(t + dur + 0.4);
-  },
-  kick(t) {
-    const c = AudioSys.ctx, o = c.createOscillator(), g = c.createGain();
-    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.12);
-    g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.32);
-    o.connect(g).connect(AudioSys.musicBus); o.start(t); o.stop(t + 0.35);
-  },
-  snare(t) {
-    const c = AudioSys.ctx;
-    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    s.buffer = AudioSys.noise; f.type = 'highpass'; f.frequency.value = 1500;
-    g.gain.setValueAtTime(0.32, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
-    s.connect(f).connect(g).connect(AudioSys.musicBus); s.start(t, Math.random() * 0.5, 0.2);
-    const o = c.createOscillator(), og = c.createGain();
-    o.type = 'triangle'; o.frequency.value = 190;
-    og.gain.setValueAtTime(0.25, t); og.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
-    o.connect(og).connect(AudioSys.musicBus); o.start(t); o.stop(t + 0.1);
-  },
-  hat(t, vol) {
-    const c = AudioSys.ctx;
-    const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-    s.buffer = AudioSys.noise; f.type = 'highpass'; f.frequency.value = 7000;
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.045);
-    s.connect(f).connect(g).connect(AudioSys.musicBus); s.start(t, Math.random() * 0.5, 0.06);
+  ui() {
+    const track = TRACKS[this.idx];
+    if (!track) return;
+    const elName = $('stName');
+    const elSong = $('stSong');
+    const elState = $('stState');
+    const btnPlay = $('btnPlay');
+    const disc = $('disc');
+    const volFill = $('volFill');
+    const volTxt = $('volTxt');
+
+    if (elName) elName.textContent = track.name;
+    if (elSong) elSong.textContent = track.song;
+    if (elState) elState.textContent = this.playing ? '▶ Reproduciendo' : '⏸ En pausa';
+    if (btnPlay) {
+      btnPlay.textContent = this.playing ? '❚❚' : '▶';
+      btnPlay.classList.toggle('on', this.playing);
+    }
+    if (disc) disc.classList.toggle('spin', this.playing);
+    if (volFill) volFill.style.width = this.vol + '%';
+    if (volTxt) volTxt.textContent = this.vol;
   },
 };
 
