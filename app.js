@@ -1049,6 +1049,68 @@ const creditsModalEl = $('creditsModal');
 const gameOverModalEl = $('gameOverModal');
 
 // Iniciar Juego desde el Menú Principal
+// Restablece completamente el vehículo al estado inicial de fábrica (apagado, Parking, freno de mano)
+function resetVehicleState() {
+  state.engine = false;
+  state.starting = false;
+  state.handbrake = true;
+  state.speed = 0;
+  state.accel = 0;
+  state.rpm = 0;
+  state.throttle = 0;
+  state.gas = false;
+  state.brake = false;
+  state.steer = 0;
+  state.steerHold = 0;
+  state.playerX = 0.25; // Carril derecho
+  state.dist = 0;
+  state.offroad = false;
+  state.stoppedTimer = 0;
+  state.isGameOver = false;
+
+  // Botón Engine Start apagado
+  const btnStart = $('btnStart');
+  if (btnStart) {
+    btnStart.classList.remove('on', 'starting');
+  }
+
+  // Tablero apagado
+  const cluster = $('cluster');
+  if (cluster) {
+    cluster.classList.remove('lit');
+  }
+
+  // Freno de mano Puesto (ON)
+  const btnHb = $('btnHandbrake');
+  if (btnHb) btnHb.classList.add('on');
+  const ledHb = $('ledHandbrake');
+  if (ledHb) ledHb.className = 'led red';
+  const hbSub = $('hbSub');
+  if (hbSub) hbSub.textContent = 'ON';
+  const icoBrake = $('icoBrake');
+  if (icoBrake) icoBrake.classList.add('on');
+
+  // Palanca en Parking (P)
+  setGear('P', true);
+
+  // Detener sonido de motor si estuviera activo
+  AudioSys.engineStop();
+
+  // Resetear contadores y HUD
+  state.score = 0;
+  state.dodges = 0;
+  const hudScore = $('hudScore');
+  if (hudScore) hudScore.textContent = '00000';
+  const hudDodges = $('hudDodges');
+  if (hudDodges) hudDodges.textContent = '0';
+  cache['hudScore'] = '00000';
+  cache['hudDodges'] = '0';
+
+  // Generar tráfico cercano y fresco
+  resetTraffic();
+}
+
+// Iniciar Juego desde el Menú Principal
 function startGameFromMenu() {
   AudioSys.init();
   mainMenuEl.classList.add('hide');
@@ -1056,40 +1118,9 @@ function startGameFromMenu() {
   creditsModalEl.classList.remove('show');
   gameOverModalEl.classList.remove('show');
   state.gameActive = true;
-  state.isGameOver = false;
 
-  // Reiniciar contadores de partida
-  state.score = 0;
-  state.dodges = 0;
-  state.stoppedTimer = 0;
-  state.playerX = 0.25;
-  state.steer = 0;
-  state.speed = 0;
-
-  // Actualizar HUD visual inmediatamente a 0
-  $('hudScore').textContent = '00000';
-  $('hudDodges').textContent = '0';
-  cache['hudScore'] = '00000';
-  cache['hudDodges'] = '0';
-
-  // Si el motor estaba apagado o en Parking, prepararlo en modo Drive
-  if (!state.engine) {
-    state.engine = true;
-    state.rpm = 1500;
-    $('cluster').classList.add('lit');
-    $('btnStart').classList.add('on');
-    AudioSys.engineStart();
-  }
-  if (state.handbrake) {
-    state.handbrake = false;
-    $('btnHandbrake').classList.remove('on');
-    $('ledHandbrake').className = 'led';
-    $('hbSub').textContent = 'OFF';
-    $('icoBrake').classList.remove('on');
-  }
-  setGear('D');
-  resetTraffic();
-  toast(I18N[state.lang].toast_engine_on);
+  resetVehicleState();
+  toast('🔑 Presiona ENGINE START para encender el Tsuru');
 }
 
 // Volver al Menú Principal
@@ -1099,9 +1130,8 @@ function returnToMainMenu() {
   creditsModalEl.classList.remove('show');
   gameOverModalEl.classList.remove('show');
   state.gameActive = false;
-  state.gas = false;
-  state.brake = false;
-  state.speed = 0;
+
+  resetVehicleState();
 }
 
 // Botones del Menú Principal
@@ -1164,10 +1194,10 @@ function triggerGameOver(reasonKey) {
 
   // Flash y sacudida de choque
   const flash = $('crashFlash');
-  flash.classList.add('active');
+  if (flash) flash.classList.add('active');
   stage.classList.add('crash-shake');
   setTimeout(() => {
-    flash.classList.remove('active');
+    if (flash) flash.classList.remove('active');
     stage.classList.remove('crash-shake');
   }, 400);
 
@@ -1190,24 +1220,9 @@ function triggerGameOver(reasonKey) {
 }
 
 function restartGame() {
-  state.isGameOver = false;
-  state.score = 0;
-  state.dodges = 0;
-  state.stoppedTimer = 0;
-  state.playerX = 0.25; // carril derecho centrado
-  state.steer = 0;
-  state.speed = 0;
-  state.gas = false;
-  state.brake = false;
-
-  // Actualizar HUD visual de inmediato a cero
-  $('hudScore').textContent = '00000';
-  $('hudDodges').textContent = '0';
-  cache['hudScore'] = '00000';
-  cache['hudDodges'] = '0';
-
+  state.gameActive = true;
   gameOverModalEl.classList.remove('show');
-  resetTraffic();
+  resetVehicleState();
   toast(I18N[state.lang].toast_restart);
 }
 
