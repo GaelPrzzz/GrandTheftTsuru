@@ -445,7 +445,9 @@ const AudioSys = {
     e.o1.frequency.setTargetAtTime(f, t, 0.05);
     e.o2.frequency.setTargetAtTime(f * 0.5, t, 0.05);
     e.f.frequency.setTargetAtTime(250 + rpm * 0.22 + throttle * 700, t, 0.05);
-    e.g.gain.setTargetAtTime(0.05 + throttle * 0.05 + rpm / 7000 * 0.03, t, 0.08);
+    const tutSpeaking = typeof TutorialSys !== 'undefined' && TutorialSys.active && !TutorialSys.audioEl.paused;
+    const gainVal = tutSpeaking ? 0.002 : (0.05 + throttle * 0.05 + rpm / 7000 * 0.03);
+    e.g.gain.setTargetAtTime(gainVal, t, 0.08);
   },
 };
 
@@ -747,6 +749,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyH' && !e.repeat) {
     AudioSys.hornStart();
     $('hub').classList.add('pressed');
+    if (typeof TutorialSys !== 'undefined' && TutorialSys.active) TutorialSys.hornUsed = true;
   }
 
   // Luces (L)
@@ -789,6 +792,16 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'KeyM' && !e.repeat) {
     $('btnPlay').click();
   }
+
+  // Enter: Avanzar paso informativo del tutorial o Encender motor si está apagado
+  if (e.code === 'Enter' && !e.repeat) {
+    const nextBtn = $('btnTutNext');
+    if (typeof TutorialSys !== 'undefined' && TutorialSys.active && nextBtn && nextBtn.style.display !== 'none') {
+      nextBtn.click();
+    } else if (!state.engine && !state.starting && (state.gameActive || (typeof TutorialSys !== 'undefined' && TutorialSys.active))) {
+      $('btnStart').click();
+    }
+  }
 });
 
 window.addEventListener('keyup', (e) => {
@@ -809,7 +822,10 @@ hold($('btnSteerL'), () => { state.steerHold = -1; }, () => { state.steerHold = 
 hold($('btnSteerR'), () => { state.steerHold = 1; }, () => { state.steerHold = 0; });
 
 // Bocina
-hold($('hub'), () => AudioSys.hornStart(), () => AudioSys.hornStop());
+hold($('hub'), () => {
+  AudioSys.hornStart();
+  if (typeof TutorialSys !== 'undefined' && TutorialSys.active) TutorialSys.hornUsed = true;
+}, () => AudioSys.hornStop());
 
 // Mandos del volante
 const actions = {
@@ -962,19 +978,21 @@ document.querySelectorAll('.gopt').forEach((b) => {
   b.addEventListener('click', () => setGear(b.dataset.gear));
 });
 
-function setGear(g) {
-  if (g === state.gear) return;
+function setGear(g, force = false) {
+  if (!force && g === state.gear) return;
   const moving = Math.abs(state.speed) > 3;
-  if (moving && (g === 'P' || (g === 'R' && state.speed > 0) || (g === 'D' && state.speed < 0))) {
+  if (!force && moving && (g === 'P' || (g === 'R' && state.speed > 0) || (g === 'D' && state.speed < 0))) {
     toast(`⚠️ Detén el auto antes de cambiar a ${GEAR_NAMES[g]}`);
     return;
   }
-  AudioSys.clunk();
+  if (!force) AudioSys.clunk();
   state.gear = g;
   document.querySelectorAll('.gopt').forEach((b) => b.classList.toggle('active', b.dataset.gear === g));
   const k = $('knob');
-  k.textContent = g;
-  k.style.top = KNOB_TOP[g] + 'px';
+  if (k) {
+    k.textContent = g;
+    k.style.top = KNOB_TOP[g] + 'px';
+  }
 }
 
 // Interacción directa arrastrando la palanca de cambios con el mouse
@@ -1113,6 +1131,9 @@ function resetVehicleState() {
 // Iniciar Juego desde el Menú Principal
 function startGameFromMenu() {
   AudioSys.init();
+  if (typeof TutorialSys !== 'undefined' && TutorialSys.active) {
+    TutorialSys.stop();
+  }
   mainMenuEl.classList.add('hide');
   tutorialModalEl.classList.remove('show');
   creditsModalEl.classList.remove('show');
@@ -1125,6 +1146,9 @@ function startGameFromMenu() {
 
 // Volver al Menú Principal
 function returnToMainMenu() {
+  if (typeof TutorialSys !== 'undefined' && TutorialSys.active) {
+    TutorialSys.stop();
+  }
   mainMenuEl.classList.remove('hide');
   tutorialModalEl.classList.remove('show');
   creditsModalEl.classList.remove('show');
@@ -1134,6 +1158,554 @@ function returnToMainMenu() {
   resetVehicleState();
 }
 
+// =========================================================
+// SISTEMA DE TUTORIAL INTERACTIVO GUIADO POR VOZ Y SUBTÍTULOS
+// =========================================================
+const TutorialSys = {
+  active: false,
+  stepIdx: 0,
+  frozen: true,
+  advancing: false,
+  actionTimer: 0,
+  hornUsed: false,
+  ccEnabled: true,
+  audioEl: new Audio(),
+
+  steps: [
+    {
+      badge: 'PASO 1 / 11',
+      file: 'tut_01_welcome.m4a',
+      title: '1. Bienvenida y Encendido',
+      desc: '¡Bienvenido a tu Tsuru Tuneado! Para empezar nuestra prueba de manejo, encendamos primero el motor.',
+      hint: '👉 Haz clic en el botón <b>ENGINE START</b> o presiona <b>Enter</b>',
+      frozen: true,
+      cardTop: 95,
+      spot1: { left: 569, top: 531, width: 80, height: 80, radius: '50%' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Welcome to Grand Theft Tsuru! First, start the engine."',
+          es: '«¡Bienvenido a Grand Theft Tsuru! Primero, enciende el motor.»'
+        },
+        {
+          t: 3.8,
+          en: '"Click the Engine Start button on your dashboard to fire up the car."',
+          es: '«Haz clic en el botón Engine Start de tu tablero para arrancar el auto.»'
+        }
+      ],
+      done: () => state.engine === true
+    },
+    {
+      badge: 'PASO 2 / 11',
+      file: 'tut_02_handbrake.mp3',
+      title: '2. Freno de Mano (Handbrake)',
+      desc: '¡Escucha cómo ruge ese motor! Ahora debemos quitar el freno de mano para liberar las ruedas traseras.',
+      hint: '👉 Haz clic en el botón <b>(P) FRENO</b> o presiona la tecla <b>P</b>',
+      frozen: true,
+      cardTop: 95,
+      spot1: { left: 862, top: 696, width: 86, height: 106, radius: '16px' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Next, release the handbrake. Click the P button or press the P key on your keyboard."',
+          es: '«Ahora, quita el freno de mano. Haz clic en el botón P o presiona la tecla P en tu teclado.»'
+        },
+        {
+          t: 4.5,
+          en: '"Don\'t accelerate with the handbrake on, or the car won\'t move!"',
+          es: '«¡No aceleres con el freno de mano puesto, o el auto no se moverá!»'
+        }
+      ],
+      done: () => state.handbrake === false
+    },
+    {
+      badge: 'PASO 3 / 11',
+      file: 'tut_03_gear_d.m4a',
+      title: '3. Palanca en Drive (D)',
+      desc: 'La transmisión está en Parking (P). Coloca la palanca de velocidades en Drive (D) para poder avanzar.',
+      hint: '👉 Arrastra la palanca a <b>D</b>, haz clic en <b>D</b> o presiona la tecla <b>F</b>',
+      frozen: true,
+      cardTop: 95,
+      spot1: { left: 726, top: 834, width: 148, height: 156, radius: '18px' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Now, shift into Drive."',
+          es: '«Ahora, cambia la transmisión a Drive (Avance).»'
+        },
+        {
+          t: 2.3,
+          en: '"Drag the gear stick to D, click the letter D, or simply press the F key."',
+          es: '«Arrastra la palanca hacia la D, haz clic en la letra D, o simplemente presiona la tecla F.»'
+        }
+      ],
+      done: () => state.gear === 'D'
+    },
+    {
+      badge: 'PASO 4 / 11',
+      file: 'tut_04_gas.mp3',
+      title: '4. Pedal del Acelerador',
+      desc: '¡Todo listo para rodar! Mantén presionado el acelerador para poner el auto en movimiento por la autopista.',
+      hint: '👉 Mantén presionado el <b>ACELERADOR</b> o la tecla <b>W</b> / <b>▲</b> (Llega a 35 km/h)',
+      frozen: false,
+      cardTop: 90,
+      spot1: { left: 456, top: 862, width: 90, height: 130, radius: '16px' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"We are in gear! Press and hold the gas pedal with your mouse..."',
+          es: '«¡Estamos en marcha! Mantén presionado el pedal del acelerador con el mouse...»'
+        },
+        {
+          t: 4.0,
+          en: '"...or hold the W key or Up Arrow to speed up. Feel the acceleration!"',
+          es: '«...o mantén la tecla W o Flecha Arriba para acelerar. ¡Siente la aceleración!»'
+        }
+      ],
+      done: () => state.speed >= 35
+    },
+    {
+      badge: 'PASO 5 / 11',
+      file: 'tut_05_brake.m4a',
+      title: '5. Pedal del Freno',
+      desc: '¡Excelente velocidad! Cuando encuentres tráfico lento frente a ti, necesitarás frenar a tiempo. Pruébalo ahora.',
+      hint: '👉 Presiona el pedal de <b>FRENO</b> o la tecla <b>S</b> / <b>▼</b> / <b>Espacio</b>',
+      frozen: false,
+      cardTop: 90,
+      spot1: { left: 304, top: 874, width: 140, height: 104, radius: '16px' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Great! Now test the brakes. Hold the brake pedal, or press the S key or Spacebar to slow down."',
+          es: '«¡Genial! Ahora prueba los frenos. Mantén el pedal de freno o presiona S o Espacio para reducir la velocidad.»'
+        },
+        {
+          t: 7.5,
+          en: '"Don\'t press the gas and the brake at the same time!"',
+          es: '«¡No presiones el acelerador y el freno al mismo tiempo!»'
+        }
+      ],
+      done: (dt) => {
+        if (state.brake) TutorialSys.actionTimer += dt;
+        return TutorialSys.actionTimer >= 0.35;
+      }
+    },
+    {
+      badge: 'PASO 6 / 11',
+      file: null,
+      title: '6. Dirección y Volante',
+      desc: 'Para cambiar entre los 4 carriles y esquivar autos a toda velocidad, gira el volante hacia la izquierda o derecha.',
+      hint: '👉 Gira el <b>VOLANTE</b> con el mouse o usa las teclas <b>A</b> / <b>D</b> (<b>◀</b> / <b>▶</b>)',
+      frozen: false,
+      cardTop: 90,
+      spot1: { left: 170, top: 470, width: 420, height: 420, radius: '50%' },
+      spot2: null,
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Now steer the car! Drag the steering wheel with your mouse, or press the A and D keys to change lanes."',
+          es: '«¡Ahora dirige el auto! Gira el volante con el mouse o presiona las teclas A y D para cambiar de carril.»'
+        }
+      ],
+      done: (dt) => {
+        if (Math.abs(state.steer) > 22) TutorialSys.actionTimer += dt;
+        return TutorialSys.actionTimer >= 0.35;
+      }
+    },
+    {
+      badge: 'PASO 7 / 11',
+      file: 'tut_07_mirrors.m4a',
+      title: '7. Espejos Retrovisores',
+      desc: 'Observa tus 3 espejos retrovisores (central superior y laterales). Siempre te muestran la vía y tu entorno.',
+      hint: '👉 Observa los <b>3 ESPEJOS</b> iluminados y pulsa <b>Continuar ➔</b> (o <b>Enter</b>)',
+      frozen: true,
+      cardTop: 115,
+      spot1: { left: 672, top: 10, width: 256, height: 88, radius: '38px', arrowBottom: true },
+      spot2: { left: 10, top: 310, width: 150, height: 185, radius: '20px' },
+      spot3: { left: 1440, top: 310, width: 150, height: 185, radius: '20px' },
+      showNext: true,
+      nextLabel: 'Continuar ➔',
+      cues: [
+        {
+          t: 0,
+          en: '"Watch your back! Check your rearview and side mirrors to spot the cars overtaking you from behind."',
+          es: '«¡Cuida tu espalda! Revisa tus espejos retrovisor y laterales para ver los autos detrás de ti.»'
+        },
+        {
+          t: 8.5,
+          en: '"Click Continue or press Enter to proceed."',
+          es: '«Haz clic en Continuar o presiona Enter para avanzar.»'
+        }
+      ],
+      done: () => false
+    },
+    {
+      badge: 'PASO 8 / 11',
+      file: 'tut_06_steer.mp3',
+      title: '8. Direccionales e Intermitentes',
+      desc: 'Un conductor profesional siempre indica sus cambios de carril o emergencias en la vía.',
+      hint: '👉 Enciende una <b>DIRECCIONAL</b> (<b>Q</b> / <b>E</b>) o el botón <b>HAZARD ▲</b> (<b>X</b>)',
+      frozen: true,
+      cardTop: 95,
+      spot1: { left: 52, top: 494, width: 150, height: 80, radius: '16px' },
+      spot2: { left: 726, top: 696, width: 82, height: 106, radius: '16px' },
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Use your signals! Press Q for left blinker, E for right blinker..."',
+          es: '«¡Usa tus direccionales! Presiona Q para la izquierda, E para la derecha...»'
+        },
+        {
+          t: 3.4,
+          en: '"...or press X for hazard emergency lights."',
+          es: '«...o presiona X para las luces intermitentes de emergencia (Hazard).»'
+        }
+      ],
+      onEnter: () => {
+        state.turn = 'none';
+        state.hazard = false;
+        $('btnTurnL').classList.remove('armed', 'blink');
+        $('btnTurnR').classList.remove('armed', 'blink');
+        $('btnHazard').classList.remove('blink');
+        $('ledHazard').className = 'led';
+        $('hazardSub').textContent = 'OFF';
+        restartBlink();
+      },
+      done: () => state.turn !== 'none' || state.hazard === true
+    },
+    {
+      badge: 'PASO 9 / 11',
+      file: 'tut_09_wipers_lights..m4a',
+      title: '9. Faros y Limpiaparabrisas',
+      desc: 'Si conduces de noche o bajo la lluvia, cuentas con faros de luz baja/alta y limpiaparabrisas con rociador.',
+      hint: '👉 Enciende las <b>LUCES</b> (tecla <b>L</b>) o el <b>LIMPIAPARABRISAS</b> (tecla <b>C</b>)',
+      frozen: true,
+      cardTop: 95,
+      spot1: { left: 652, top: 696, width: 82, height: 106, radius: '16px' },
+      spot2: { left: 794, top: 696, width: 82, height: 106, radius: '16px' },
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"For bad weather or night driving, press the L key to switch on your headlights..."',
+          es: '«Para mal clima o manejo nocturno, presiona la tecla L para encender tus faros...»'
+        },
+        {
+          t: 6.8,
+          en: '"...and press the C key to activate the wipers."',
+          es: '«...y presiona la tecla C para activar los limpiaparabrisas.»'
+        }
+      ],
+      onEnter: () => {
+        state.lights = 0;
+        state.wiperMode = 0;
+      },
+      done: () => state.lights > 0 || state.wiperMode > 0
+    },
+    {
+      badge: 'PASO 10 / 11',
+      file: 'tut_08_signals.ogg',
+      title: '10. Estéreo MP3 y Claxon',
+      desc: '¡Ponle música a tu viaje o abre paso en el tráfico! Prueba encender la radio MP3 o tocar la bocina del volante.',
+      hint: '👉 Enciende la <b>RADIO</b> (tecla <b>M</b>) o toca el <b>CLAXON</b> (tecla <b>H</b>)',
+      frozen: true,
+      cardTop: 90,
+      spot1: { left: 312, top: 612, width: 136, height: 136, radius: '50%' },
+      spot2: { left: 642, top: 442, width: 316, height: 254, radius: '18px' },
+      spot3: null,
+      showNext: false,
+      cues: [
+        {
+          t: 0,
+          en: '"Now for the fun part! Press the H key to honk the Tsuru horn..."',
+          es: '«¡Ahora la parte divertida! Presiona la tecla H para tocar el claxon del Tsuru...»'
+        },
+        {
+          t: 4.0,
+          en: '"...and press the M key to turn on the radio and play some music!"',
+          es: '«...¡y presiona la tecla M para encender la radio y reproducir música!»'
+        }
+      ],
+      onEnter: () => {
+        TutorialSys.hornUsed = false;
+        if (radio.playing) radio.toggle();
+      },
+      done: () => radio.playing === true || TutorialSys.hornUsed === true
+    },
+    {
+      badge: 'PASO 11 / 11',
+      file: 'tut_11_finish.mp3',
+      title: '11. ¡Tutorial Completado!',
+      desc: '¡Felicidades! Ya dominas cada control del Tsuru Tuneado. Es hora de salir a la autopista, esquivar el tráfico y romper el récord.',
+      hint: '🏁 Haz clic en <b>¡A CONDUCIR! ➔</b> o presiona <b>Enter</b> para jugar',
+      frozen: true,
+      cardTop: 185,
+      spot1: null,
+      spot2: null,
+      spot3: null,
+      showNext: true,
+      nextLabel: '¡A CONDUCIR! ➔',
+      cues: [
+        {
+          t: 0,
+          en: '"Awesome job! You have learned all the controls."',
+          es: '«¡Excelente trabajo! Has aprendido todos los controles.»'
+        },
+        {
+          t: 3.1,
+          en: '"Buckle up, watch your speed, and dodge the traffic. Press Enter to hit the highway!"',
+          es: '«Abróchate el cinturón, cuida tu velocidad y esquiva el tráfico. ¡Presiona Enter para salir a la autopista!»'
+        }
+      ],
+      done: () => false
+    }
+  ],
+
+  init() {
+    this.audioEl.preload = 'auto';
+    this.audioEl.addEventListener('play', () => {
+      const wave = $('tutAudioWave');
+      if (wave) wave.classList.add('playing');
+    });
+    const onEndOrPause = () => {
+      const wave = $('tutAudioWave');
+      if (wave) wave.classList.remove('playing');
+    };
+    this.audioEl.addEventListener('ended', onEndOrPause);
+    this.audioEl.addEventListener('pause', onEndOrPause);
+
+    // Actualizar subtítulos sincronizados conforme avanza la voz
+    this.audioEl.addEventListener('timeupdate', () => {
+      this.updateSubtitles(this.audioEl.currentTime);
+    });
+
+    const btnCC = $('btnTutCC');
+    if (btnCC) {
+      btnCC.addEventListener('click', () => {
+        AudioSys.click();
+        this.ccEnabled = !this.ccEnabled;
+        btnCC.classList.toggle('active-cc', this.ccEnabled);
+        const subBox = $('tutSubtitleBox');
+        if (subBox) subBox.classList.toggle('hidden', !this.ccEnabled);
+      });
+    }
+
+    const btnReplay = $('btnTutReplay');
+    if (btnReplay) {
+      btnReplay.addEventListener('click', () => {
+        AudioSys.click();
+        this.playStepAudio();
+      });
+    }
+
+    const btnExit = $('btnTutExit');
+    if (btnExit) {
+      btnExit.addEventListener('click', () => {
+        AudioSys.click();
+        returnToMainMenu();
+      });
+    }
+
+    const btnNext = $('btnTutNext');
+    if (btnNext) {
+      btnNext.addEventListener('click', () => {
+        AudioSys.click();
+        if (this.stepIdx >= this.steps.length - 1) {
+          this.finishToGame();
+        } else {
+          this.completeCurrentStep();
+        }
+      });
+    }
+  },
+
+  updateSubtitles(currentTime = 0) {
+    const step = this.steps[this.stepIdx];
+    if (!step || !step.cues || !step.cues.length) return;
+    let activeCue = step.cues[0];
+    for (const c of step.cues) {
+      if (currentTime >= c.t) {
+        activeCue = c;
+      }
+    }
+    const enEl = $('tutSubEn');
+    const esEl = $('tutSubEs');
+    if (enEl && enEl.textContent !== activeCue.en) enEl.textContent = activeCue.en;
+    if (esEl && esEl.textContent !== activeCue.es) esEl.textContent = activeCue.es;
+  },
+
+  start() {
+    AudioSys.init();
+    mainMenuEl.classList.add('hide');
+    tutorialModalEl.classList.remove('show');
+    creditsModalEl.classList.remove('show');
+    gameOverModalEl.classList.remove('show');
+
+    resetVehicleState();
+    state.gameActive = true;
+    this.active = true;
+    this.stepIdx = 0;
+    this.advancing = false;
+
+    const layer = $('tutInteractiveLayer');
+    if (layer) layer.classList.add('active');
+
+    this.loadStep(0);
+  },
+
+  stop() {
+    this.active = false;
+    this.frozen = false;
+    this.advancing = false;
+    try {
+      this.audioEl.pause();
+      this.audioEl.currentTime = 0;
+    } catch (_) {}
+    const layer = $('tutInteractiveLayer');
+    if (layer) layer.classList.remove('active');
+  },
+
+  finishToGame() {
+    this.stop();
+    startGameFromMenu();
+  },
+
+  playStepAudio() {
+    const step = this.steps[this.stepIdx];
+    this.updateSubtitles(0);
+    if (!step || !step.file) {
+      try { this.audioEl.pause(); } catch (_) {}
+      const wave = $('tutAudioWave');
+      if (wave) wave.classList.remove('playing');
+      return;
+    }
+    try {
+      this.audioEl.pause();
+      this.audioEl.src = 'audio/AudiosJuego/' + step.file;
+      this.audioEl.volume = 1.0;
+      this.audioEl.currentTime = 0;
+      this.audioEl.play().catch((err) => {
+        console.warn('Error reproduciendo audio de tutorial:', err);
+      });
+    } catch (e) {
+      console.warn('Error de audio en tutorial:', e);
+    }
+  },
+
+  applySpotlight(elId, cfg) {
+    const el = $(elId);
+    if (!el) return;
+    if (!cfg) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'block';
+    el.style.left = cfg.left + 'px';
+    el.style.top = cfg.top + 'px';
+    el.style.width = cfg.width + 'px';
+    el.style.height = cfg.height + 'px';
+    el.style.borderRadius = cfg.radius || '16px';
+
+    if (elId === 'tutSpotlight') {
+      const ptr = $('tutPointer');
+      if (ptr) {
+        if (cfg.arrowBottom) {
+          ptr.textContent = '⬆';
+          ptr.style.top = (cfg.height + 8) + 'px';
+        } else {
+          ptr.textContent = '⬇';
+          ptr.style.top = '-46px';
+        }
+      }
+    }
+  },
+
+  loadStep(idx) {
+    this.stepIdx = idx;
+    this.advancing = false;
+    this.actionTimer = 0;
+    const step = this.steps[idx];
+    if (!step) return;
+
+    this.frozen = Boolean(step.frozen);
+    if (typeof step.onEnter === 'function') {
+      step.onEnter();
+    }
+
+    $('tutStepBadge').textContent = step.badge;
+    $('tutStepTitle').textContent = step.title;
+    $('tutStepDesc').textContent = step.desc;
+    $('tutActionHint').innerHTML = step.hint;
+
+    const card = $('tutDialogCard');
+    if (card) {
+      card.style.top = (step.cardTop || 120) + 'px';
+    }
+
+    const nextBtn = $('btnTutNext');
+    if (nextBtn) {
+      if (step.showNext) {
+        nextBtn.style.display = 'inline-block';
+        nextBtn.textContent = step.nextLabel || 'Continuar ➔';
+      } else {
+        nextBtn.style.display = 'none';
+      }
+    }
+
+    this.applySpotlight('tutSpotlight', step.spot1);
+    this.applySpotlight('tutSpotlight2', step.spot2);
+    this.applySpotlight('tutSpotlight3', step.spot3);
+
+    this.playStepAudio();
+  },
+
+  completeCurrentStep() {
+    if (this.advancing) return;
+    this.advancing = true;
+    AudioSys.click();
+    toast('✨ ¡Muy bien! Siguiente paso...');
+
+    setTimeout(() => {
+      if (!this.active) return;
+      if (this.stepIdx + 1 < this.steps.length) {
+        this.loadStep(this.stepIdx + 1);
+      } else {
+        this.finishToGame();
+      }
+    }, 550);
+  },
+
+  check(dt) {
+    if (!this.active || this.advancing) return;
+    const step = this.steps[this.stepIdx];
+    if (!step) return;
+    if (step.done(dt)) {
+      this.completeCurrentStep();
+    }
+  }
+};
+TutorialSys.init();
+
 // Botones del Menú Principal
 $('btnMenuPlay').addEventListener('click', () => {
   AudioSys.click();
@@ -1142,7 +1714,7 @@ $('btnMenuPlay').addEventListener('click', () => {
 
 $('btnMenuTutorial').addEventListener('click', () => {
   AudioSys.click();
-  tutorialModalEl.classList.add('show');
+  TutorialSys.start();
 });
 
 $('btnMenuCredits').addEventListener('click', () => {
@@ -1188,7 +1760,7 @@ $('btnRestart').addEventListener('click', () => {
 });
 
 function triggerGameOver(reasonKey) {
-  if (state.isGameOver) return;
+  if (state.isGameOver || (typeof TutorialSys !== 'undefined' && TutorialSys.active)) return;
   state.isGameOver = true;
   AudioSys.crash();
 
@@ -1244,6 +1816,35 @@ const GEARS = [0, 22, 45, 75, 110, 150, 210];
 
 function update(dt) {
   state.time += dt;
+
+  if (typeof TutorialSys !== 'undefined' && TutorialSys.active) {
+    TutorialSys.check(dt);
+    if (TutorialSys.frozen) {
+      state.speed = 0;
+      state.accel = 0;
+      state.stoppedTimer = 0;
+      const targetRpm = state.engine ? 1050 : 0;
+      state.rpm += (targetRpm - state.rpm) * Math.min(1, dt * 6);
+      AudioSys.engineUpdate(state.rpm, 0);
+
+      // Intermitentes activos incluso con el auto detenido en el tutorial
+      if (state.hazard || state.turn !== 'none') {
+        state.blinkT += dt;
+        if (state.blinkT >= 0.38) {
+          state.blinkT = 0;
+          state.blinkOn = !state.blinkOn;
+          AudioSys.tick(state.blinkOn);
+        }
+      } else state.blinkOn = false;
+
+      // Barrido de agujas al encender en el paso 1
+      if (state.sweep >= 0) {
+        state.sweep += dt / 1.4;
+        if (state.sweep >= 1) state.sweep = -1;
+      }
+      return;
+    }
+  }
 
   // Acelerador
   const tGoal = state.gas && state.engine && !state.isGameOver ? 1 : 0;

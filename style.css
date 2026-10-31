@@ -845,3 +845,236 @@ html, body {
 .credit-slogan-box .quote-mark {
   font-size: 20px; font-weight: 900; color: #ffb020; margin: 0 4px;
 }
+
+
+/* =========================================================
+   TUTORIAL INTERACTIVO GUIADO CON SPOTLIGHT Y AUDIOS
+   ========================================================= */
+.tut-interactive-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 54;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.tut-interactive-layer.active {
+  opacity: 1;
+  visibility: visible;
+}
+.tut-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 8, 16, 0.45);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.tut-interactive-layer.driving-active .tut-backdrop {
+  background: rgba(4, 8, 16, 0.12);
+}
+
+.tut-spotlight {
+  position: absolute;
+  border-radius: 16px;
+  border: 3px solid #ffb020;
+  box-shadow: 0 0 0 4px rgba(255, 176, 32, 0.3), 0 0 30px #ffb020, inset 0 0 18px rgba(255, 176, 32, 0.35);
+  pointer-events: none;
+  transition: all 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: tutPulseSpot 1.3s ease-in-out infinite;
+  z-index: 55;
+}
+@keyframes tutPulseSpot {
+  0%, 100% { transform: scale(1); border-color: #ffb020; box-shadow: 0 0 0 4px rgba(255, 176, 32, 0.3), 0 0 28px #ffb020; }
+  50% { transform: scale(1.06); border-color: #3dff8a; box-shadow: 0 0 0 8px rgba(61, 255, 138, 0.35), 0 0 40px #3dff8a; }
+}
+
+.tut-pointer {
+  position: absolute;
+  left: 50%;
+  top: -46px;
+  transform: translateX(-50%);
+  font-size: 32px;
+  color: #ffb020;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.85));
+  animation: tutBounceArrow 0.8s ease-in-out infinite alternate;
+  user-select: none;
+}
+@keyframes tutBounceArrow {
+  from { transform: translateX(-50%) translateY(0); }
+  to   { transform: translateX(-50%) translateY(-12px); }
+}
+
+.tut-dialog-card {
+  position: absolute;
+  left: 50%;
+  top: 120px;
+  transform: translateX(-50%);
+  width: 580px;
+  max-width: 92%;
+  padding: 20px 26px;
+  border-radius: 20px;
+  background: linear-gradient(165deg, rgba(18, 25, 38, 0.96), rgba(9, 13, 20, 0.98));
+  border: 2px solid rgba(58, 168, 255, 0.55);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(58, 168, 255, 0.25);
+  color: #f0f4f8;
+  pointer-events: all;
+  z-index: 56;
+  transition: top 0.35s ease, left 0.35s ease;
+}
+
+.tut-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.tut-badge {
+  background: linear-gradient(90deg, #2f7fd0, #7a4dff);
+  color: #fff;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 1px;
+}
+.tut-audio-wave {
+  font-size: 12px;
+  color: #3dff8a;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tut-audio-wave.playing {
+  opacity: 1;
+  animation: pulseWave 1s ease-in-out infinite alternate;
+}
+@keyframes pulseWave {
+  from { opacity: 0.55; }
+  to   { opacity: 1; text-shadow: 0 0 10px #3dff8a; }
+}
+
+.tut-header-btns {
+  display: flex;
+  gap: 8px;
+}
+.tut-ctrl-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #dbe4f0;
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tut-ctrl-btn.active-cc {
+  background: rgba(61, 255, 138, 0.2);
+  border-color: #3dff8a;
+  color: #3dff8a;
+}
+.tut-ctrl-btn:hover {
+  background: rgba(58, 168, 255, 0.3);
+  border-color: #3aa8ff;
+  color: #fff;
+}
+.tut-ctrl-btn.skip:hover {
+  background: rgba(255, 59, 48, 0.3);
+  border-color: #ff3b30;
+}
+
+.tut-step-title {
+  margin: 0 0 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  color: #ffb020;
+  letter-spacing: 0.5px;
+}
+.tut-step-desc {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: #d2deed;
+}
+
+/* Subtítulos sincronizados de voz (CC) */
+.tut-subtitle-box {
+  background: rgba(6, 10, 18, 0.88);
+  border-left: 4px solid #3aa8ff;
+  border-radius: 8px 12px 12px 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 0 18px rgba(58, 168, 255, 0.12);
+  transition: opacity 0.25s ease;
+}
+.tut-subtitle-box.hidden {
+  display: none;
+}
+.tut-sub-tag {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #3aa8ff;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.tut-sub-en {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  line-height: 1.4;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+.tut-sub-es {
+  font-size: 13px;
+  font-style: italic;
+  color: #ffd166;
+  line-height: 1.35;
+}
+.tut-action-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 176, 32, 0.35);
+}
+.tut-action-hint {
+  font-size: 13.5px;
+  color: #fff;
+}
+.tut-action-hint b {
+  color: #3dff8a;
+  font-family: 'Orbitron', monospace;
+  background: rgba(61, 255, 138, 0.12);
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(61, 255, 138, 0.35);
+}
+.tut-next-btn {
+  background: linear-gradient(90deg, #3dff8a, #1ca855);
+  color: #06150c;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(61, 255, 138, 0.4);
+  transition: transform 0.1s, filter 0.15s;
+  white-space: nowrap;
+}
+.tut-next-btn:hover {
+  filter: brightness(1.12);
+  transform: scale(1.03);
+}

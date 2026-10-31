@@ -473,6 +473,46 @@
         </div>
       </div>
 
+      <!-- =========================================================
+         SISTEMA DE TUTORIAL INTERACTIVO EN SECUENCIA (CON AUDIOS)
+         ========================================================= -->
+      <div class="tut-interactive-layer" id="tutInteractiveLayer">
+        <div class="tut-backdrop" id="tutBackdrop"></div>
+        <!-- Halos de enfoque sobre los botones reales -->
+        <div class="tut-spotlight" id="tutSpotlight">
+          <div class="tut-pointer" id="tutPointer">⬇</div>
+        </div>
+        <div class="tut-spotlight secondary" id="tutSpotlight2" style="display:none;"></div>
+        <div class="tut-spotlight tertiary" id="tutSpotlight3" style="display:none;"></div>
+
+        <!-- Tarjeta flotante del Copiloto -->
+        <div class="tut-dialog-card" id="tutDialogCard">
+          <div class="tut-dialog-header">
+            <span class="tut-badge" id="tutStepBadge">PASO 1 / 11</span>
+            <span class="tut-audio-wave" id="tutAudioWave">🔊 Voz activa</span>
+            <div class="tut-header-btns">
+              <button class="tut-ctrl-btn active-cc" id="btnTutCC" title="Mostrar / ocultar subtítulos">💬 CC</button>
+              <button class="tut-ctrl-btn" id="btnTutReplay" title="Repetir audio">🔁 Audio</button>
+              <button class="tut-ctrl-btn skip" id="btnTutExit" title="Salir al menú">✖ Salir</button>
+            </div>
+          </div>
+          <h3 class="tut-step-title" id="tutStepTitle">1. Encender el Motor</h3>
+          <p class="tut-step-desc" id="tutStepDesc">Haz clic en el botón ENGINE START para poner en marcha el motor.</p>
+
+          <!-- Caja de Subtítulos Sincronizados (Inglés / Español) -->
+          <div class="tut-subtitle-box" id="tutSubtitleBox">
+            <div class="tut-sub-tag">CC · SUBTÍTULOS DE VOZ</div>
+            <div class="tut-sub-en" id="tutSubEn">"Welcome to Grand Theft Tsuru! First, start the engine..."</div>
+            <div class="tut-sub-es" id="tutSubEs">«¡Bienvenido a Grand Theft Tsuru! Primero, enciende el motor...»</div>
+          </div>
+
+          <div class="tut-action-box">
+            <div class="tut-action-hint" id="tutActionHint">👉 Haz clic en <b>ENGINE START</b> o presiona <b>Enter</b></div>
+            <button class="tut-next-btn" id="btnTutNext" style="display:none;">Continuar ➔</button>
+          </div>
+        </div>
+      </div>
+
       <!-- MODAL DE TUTORIAL / CÓMO JUGAR -->
       <div class="modal-overlay" id="tutorialModal">
         <div class="modal-card">
